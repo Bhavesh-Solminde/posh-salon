@@ -1,0 +1,93 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+* {
+  scrollbar-color: #c7a24b #faf6ed;
+}
+
+body {
+  background: #faf6ed;
+  color: #1c160e;
+}
+
+::selection {
+  background: #c7a24b;
+  color: #faf6ed;
+}
+
+:focus-visible {
+  outline: 2px solid #c7a24b;
+  outline-offset: 3px;
+}
+
+/* Deckle edge: an irregular torn-paper silhouette for cream card-stock inserts. */
+.deckle {
+  clip-path: polygon(
+    0.6% 2.1%, 3.4% 0%, 7.1% 1.6%, 11.8% 0.3%, 16.2% 1.9%, 21% 0.2%, 25.9% 1.4%,
+    31.1% 0%, 36% 1.7%, 41.2% 0.4%, 46.5% 1.9%, 52% 0.2%, 57.3% 1.6%, 62.6% 0%,
+    68% 1.5%, 73.2% 0.3%, 78.6% 1.8%, 84% 0.2%, 89.3% 1.5%, 94.5% 0%, 99.4% 1.9%,
+    100% 6%, 98.6% 11.4%, 100% 17%, 98.9% 22.6%, 100% 28.3%, 98.7% 34%, 100% 39.6%,
+    98.9% 45.2%, 100% 50.8%, 98.6% 56.4%, 100% 62%, 98.9% 67.6%, 100% 73.2%,
+    98.7% 78.8%, 100% 84.4%, 98.9% 90%, 100% 94.4%, 99.5% 98.1%, 94.6% 100%,
+    89.4% 98.5%, 84.1% 100%, 78.7% 98.4%, 73.3% 100%, 68% 98.5%, 62.6% 100%,
+    57.3% 98.4%, 52% 100%, 46.6% 98.5%, 41.2% 100%, 36% 98.4%, 31.1% 100%,
+    25.9% 98.6%, 21% 100%, 16.2% 98.5%, 11.8% 100%, 7.1% 98.4%, 3.4% 100%,
+    0.6% 97.9%, 0% 92.6%, 1.4% 87%, 0% 81.4%, 1.1% 75.8%, 0% 70.2%, 1.3% 64.6%,
+    0% 59%, 1.1% 53.4%, 0% 47.8%, 1.4% 42.2%, 0% 36.6%, 1.1% 31%, 0% 25.4%,
+    1.3% 19.8%, 0% 14.2%, 1.1% 8.6%
+  );
+}
+
+/* Fine paper-grain overlay, authored for card-stock panels; kept far below decoration threshold. */
+.grain::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.05;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Printing is a real counter task: an invoice or a membership card goes home
+   with the client. Drop the app frame and the paper tint so the sheet carries
+   only the document. */
+@media print {
+  /* The one deliberate colour outside the palette: paper is already the sheet,
+     so the warm ground would only cost toner. */
+  body {
+    background: #fff;
+  }
+
+  .print-sheet {
+    border: 0 !important;
+    box-shadow: none !important;
+    max-width: none !important;
+    padding: 0 !important;
+    background: #fff !important;
+  }
+
+  .print-page {
+    padding: 0 !important;
+    background: #fff !important;
+  }
+
+  @page {
+    margin: 14mm;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

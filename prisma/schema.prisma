@@ -1,0 +1,501 @@
+// Posh Salon — data model (frozen decisions).
+// Money = Decimal(12,2). Wallet + stock + finances are movement ledgers; cached
+// balances (Membership.balance, Product.stock) are updated atomically alongside
+// their ledger rows and are always reconcilable from those rows.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─────────────────────────── Auth (Better Auth) ───────────────────────────
+
+enum StaffRole {
+  ADMIN
+  MANAGER
+  CASHIER
+}
+
+model User {
+  id            String    @id
+  name          String
+  email         String    @unique
+  emailVerified Boolean   @default(false)
+  image         String?
+  role          StaffRole @default(CASHIER)
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  sessions      Session[]
+  accounts      Account[]
+
+  @@map("user")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String   @unique
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("verification")
+}
+
+// ─────────────────────────── Customers ───────────────────────────
+
+model Customer {
+  id           String        @id @default(cuid())
+  name         String
+  phone        String        @unique
+  email        String?
+  birthday     DateTime?
+  anniversary  DateTime?
+  gender       String?
+  notes        String?
+  allergies    String?
+  branchId     String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  deletedAt    DateTime?
+  memberships  Membership[]
+  invoices     Invoice[]
+  appointments Appointment[]
+
+  @@index([name])
+}
+
+// ─────────────────────────── Services ───────────────────────────
+
+model ServiceCategory {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  sortOrder Int       @default(0)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  services  Service[]
+}
+
+model Service {
+  id           String           @id @default(cuid())
+  name         String
+  categoryId   String?
+  category     ServiceCategory? @relation(fields: [categoryId], references: [id])
+  durationMin  Int?
+  price        Decimal          @default(0) @db.Decimal(12, 2)
+  description  String?
+  isActive     Boolean          @default(true)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  deletedAt    DateTime?
+  appointments Appointment[]
+
+  @@index([categoryId])
+}
+
+// ─────────────────────────── Products & inventory ───────────────────────────
+
+enum ProductUse {
+  RETAIL
+  IN_SALON
+  BOTH
+}
+
+enum MovementType {
+  PURCHASE // supplier restock → stock+ , expense
+  SALE // sold on an invoice → stock−
+  CONSUMPTION // used up in a service → stock−
+  ADJUSTMENT // wastage / recount (signed)
+}
+
+model Product {
+  id              String          @id @default(cuid())
+  name            String
+  sku             String?         @unique
+  category        String?
+  use             ProductUse      @default(RETAIL)
+  salePrice       Decimal         @default(0) @db.Decimal(12, 2)
+  costPrice       Decimal         @default(0) @db.Decimal(12, 2)
+  stock           Int             @default(0) // cache of StockMovement sum
+  reorderLevel    Int             @default(0)
+  linkedServiceId String? // in-salon: auto-deducts when this service is billed
+  imageUrl        String?
+  isActive        Boolean         @default(true)
+  branchId        String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  deletedAt       DateTime?
+  movements       StockMovement[]
+
+  @@index([name])
+}
+
+model StockMovement {
+  id          String       @id @default(cuid())
+  productId   String
+  product     Product      @relation(fields: [productId], references: [id])
+  type        MovementType
+  quantity    Int // always positive; `type` carries the direction
+  unitCost    Decimal?     @db.Decimal(12, 2)
+  note        String?
+  invoiceId   String?
+  createdById String?
+  createdAt   DateTime     @default(now())
+
+  @@index([productId])
+}
+
+// ─────────────────────────── Membership (wallet ledger) ───────────────────────────
+
+enum MembershipTier {
+  SILVER
+  GOLD
+  PLATINUM
+  CUSTOM
+}
+
+enum MembershipStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+}
+
+enum WalletTxnType {
+  CREDIT
+  DEBIT
+}
+
+model MembershipPlan {
+  id           String         @id @default(cuid())
+  name         String
+  tier         MembershipTier @default(SILVER)
+  price        Decimal        @default(0) @db.Decimal(12, 2)
+  validityDays Int            @default(365)
+  bonusAmount  Decimal        @default(0) @db.Decimal(12, 2)
+  discountPct  Decimal        @default(0) @db.Decimal(5, 2)
+  freeServices String?
+  terms        String?
+  isActive     Boolean        @default(true)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  deletedAt    DateTime?
+  memberships  Membership[]
+}
+
+model Membership {
+  id           String                  @id @default(cuid())
+  membershipNo String                  @unique
+  qrToken      String                  @unique
+  customerId   String
+  customer     Customer                @relation(fields: [customerId], references: [id])
+  planId       String
+  plan         MembershipPlan          @relation(fields: [planId], references: [id])
+  tier         MembershipTier
+  status       MembershipStatus        @default(ACTIVE)
+  balance      Decimal                 @default(0) @db.Decimal(12, 2) // cache of ledger
+  joinedAt     DateTime                @default(now())
+  expiresAt    DateTime?
+  notes        String?
+  branchId     String?
+  createdAt    DateTime                @default(now())
+  updatedAt    DateTime                @updatedAt
+  deletedAt    DateTime?
+  transactions MembershipTransaction[]
+
+  @@index([customerId])
+}
+
+model MembershipTransaction {
+  id           String        @id @default(cuid())
+  membershipId String
+  membership   Membership    @relation(fields: [membershipId], references: [id])
+  type         WalletTxnType
+  amount       Decimal       @db.Decimal(12, 2) // always positive; `type` carries direction
+  reason       String
+  invoiceId    String?
+  createdById  String?
+  createdAt    DateTime      @default(now())
+
+  @@index([membershipId])
+}
+
+// ─────────────────────────── Appointments ───────────────────────────
+
+enum AppointmentStatus {
+  BOOKED
+  COMPLETED
+  NO_SHOW
+  CANCELLED
+}
+
+model Appointment {
+  id           String            @id @default(cuid())
+  customerId   String?
+  customer     Customer?         @relation(fields: [customerId], references: [id])
+  customerName String? // for walk-ins without a saved record
+  phone        String?
+  serviceId    String?
+  service      Service?          @relation(fields: [serviceId], references: [id])
+  stylistId    String?
+  stylist      Employee?         @relation(fields: [stylistId], references: [id])
+  startAt      DateTime
+  status       AppointmentStatus @default(BOOKED)
+  notes        String?
+  branchId     String?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  deletedAt    DateTime?
+
+  @@index([startAt])
+}
+
+// ─────────────────────────── Billing ───────────────────────────
+
+enum InvoiceItemType {
+  SERVICE
+  PRODUCT
+  MEMBERSHIP_TOPUP
+}
+
+enum InvoiceStatus {
+  PAID
+  PARTIAL
+  VOID
+}
+
+enum PaymentMethod {
+  CASH
+  UPI
+  CARD
+}
+
+model Invoice {
+  id              String        @id @default(cuid())
+  number          String        @unique
+  customerId      String?
+  customer        Customer?     @relation(fields: [customerId], references: [id])
+  serviceSubtotal Decimal       @default(0) @db.Decimal(12, 2)
+  productSubtotal Decimal       @default(0) @db.Decimal(12, 2)
+  discountTotal   Decimal       @default(0) @db.Decimal(12, 2)
+  taxTotal        Decimal       @default(0) @db.Decimal(12, 2)
+  grandTotal      Decimal       @default(0) @db.Decimal(12, 2)
+  walletRedeemed  Decimal       @default(0) @db.Decimal(12, 2) // ≤ serviceSubtotal
+  amountPaid      Decimal       @default(0) @db.Decimal(12, 2)
+  balanceDue      Decimal       @default(0) @db.Decimal(12, 2)
+  status          InvoiceStatus @default(PAID)
+  notes           String?
+  createdById     String?
+  branchId        String?
+  createdAt       DateTime      @default(now())
+  deletedAt       DateTime?
+  items           InvoiceItem[]
+  payments        Payment[]
+
+  @@index([customerId])
+  @@index([createdAt])
+}
+
+model InvoiceItem {
+  id        String          @id @default(cuid())
+  invoiceId String
+  invoice   Invoice         @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  type      InvoiceItemType
+  refId     String? // serviceId / productId / planId
+  name      String // snapshot at time of sale
+  quantity  Int             @default(1)
+  unitPrice Decimal         @db.Decimal(12, 2)
+  discount  Decimal         @default(0) @db.Decimal(12, 2)
+  lineTotal Decimal         @db.Decimal(12, 2)
+
+  @@index([invoiceId])
+}
+
+model Payment {
+  id        String        @id @default(cuid())
+  invoiceId String
+  invoice   Invoice       @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  method    PaymentMethod // "mixed" = multiple rows; "partial" = sum < grandTotal
+  amount    Decimal       @db.Decimal(12, 2)
+  reference String?
+  createdAt DateTime      @default(now())
+
+  @@index([invoiceId])
+}
+
+// ─────────────────────────── Unified finance ledger ───────────────────────────
+
+enum FinanceType {
+  INCOME
+  EXPENSE
+}
+
+enum FinanceCategory {
+  MEMBERSHIP_SALE
+  PRODUCT_SALE
+  SERVICE_SALE
+  SUPPLIER_PURCHASE
+  MISC_EXPENSE
+}
+
+model FinancialTransaction {
+  id           String          @id @default(cuid())
+  type         FinanceType
+  category     FinanceCategory
+  amount       Decimal         @db.Decimal(12, 2)
+  description  String?
+  invoiceId    String?
+  membershipId String?
+  productId    String?
+  occurredAt   DateTime        @default(now())
+  createdById  String?
+  branchId     String?
+  createdAt    DateTime        @default(now())
+  deletedAt    DateTime?
+
+  @@index([occurredAt])
+  @@index([type])
+  @@index([category])
+}
+
+// ─────────────────────────── Employees & attendance ───────────────────────────
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LEAVE
+}
+
+model Employee {
+  id           String             @id @default(cuid())
+  name         String
+  role         String // job title, e.g. "Senior Stylist"
+  phone        String?
+  joinedAt     DateTime?
+  isActive     Boolean            @default(true)
+  branchId     String?
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  deletedAt    DateTime?
+  attendance   AttendanceRecord[]
+  appointments Appointment[]
+}
+
+model AttendanceRecord {
+  id         String           @id @default(cuid())
+  employeeId String
+  employee   Employee         @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  date       DateTime         @db.Date
+  status     AttendanceStatus
+  note       String?
+  createdAt  DateTime         @default(now())
+
+  @@unique([employeeId, date])
+  @@index([date])
+}
+
+// ─────────────────────────── Settings & audit ───────────────────────────
+
+model Settings {
+  id              String   @id @default("singleton")
+  salonName       String   @default("Posh Salon")
+  tagline         String?
+  addressLine     String?
+  city            String?
+  phone           String?
+  whatsapp        String?
+  email           String?
+  gstNumber       String?
+  gstRatePct      Decimal  @default(18) @db.Decimal(5, 2)
+  pricesIncludeGst Boolean @default(false)
+  invoicePrefix   String   @default("POSH")
+  invoiceNextSeq  Int      @default(1)
+  currency        String   @default("INR")
+  hoursJson       Json?
+  updatedAt       DateTime @updatedAt
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String
+  entity    String
+  entityId  String?
+  metaJson  Json?
+  createdAt DateTime @default(now())
+
+  @@index([entity, entityId])
+  @@index([createdAt])
+}
+
+// --- Website content (light CMS; public landing is not rewired to the DB this round) ---
+
+model Offer {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  badge       String? // e.g. "Limited" or "20% off"
+  active      Boolean   @default(true)
+  sortOrder   Int       @default(0)
+  startsAt    DateTime?
+  endsAt      DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  @@index([active, sortOrder])
+}
+
+model Testimonial {
+  id        String    @id @default(cuid())
+  author    String
+  role      String? // e.g. "Bridal client"
+  quote     String
+  rating    Int       @default(5)
+  active    Boolean   @default(true)
+  sortOrder Int       @default(0)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([active, sortOrder])
+}
