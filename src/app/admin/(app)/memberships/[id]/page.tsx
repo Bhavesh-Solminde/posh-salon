@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import { Wallet } from "lucide-react";
-import QRCode from "qrcode";
 import { prisma } from "@/lib/db";
 import { requireStaff } from "@/lib/session";
 import { PageHeader } from "@/components/admin/ui/PageHeader";
@@ -8,9 +7,11 @@ import { Panel, PanelHeader } from "@/components/admin/ui/Panel";
 import { StatusChip } from "@/components/admin/ui/StatusChip";
 import { EmptyState } from "@/components/admin/ui/EmptyState";
 import { PrintButton } from "@/components/admin/ui/PrintButton";
-import { Seal } from "@/components/ui/Seal";
+import { WhatsAppSendButton } from "@/components/admin/ui/WhatsAppSendButton";
+import { MembershipCardPanel } from "@/components/MembershipCardPanel";
 import { formatINR } from "@/lib/money";
 import { formatDate } from "@/lib/format";
+import { getOrigin } from "@/lib/url";
 
 export default async function MembershipCard({
   params,
@@ -19,17 +20,16 @@ export default async function MembershipCard({
 }) {
   await requireStaff();
   const { id } = await params;
-  const m = await prisma.membership.findFirst({
-    where: { id, deletedAt: null },
-    include: { customer: true, plan: true, transactions: { orderBy: { createdAt: "desc" } } },
-  });
+  const [m, origin] = await Promise.all([
+    prisma.membership.findFirst({
+      where: { id, deletedAt: null },
+      include: { customer: true, plan: true, transactions: { orderBy: { createdAt: "desc" } } },
+    }),
+    getOrigin(),
+  ]);
   if (!m) notFound();
 
-  const qrSvg = await QRCode.toString(m.qrToken, {
-    type: "svg",
-    margin: 0,
-    color: { dark: "#1C160E", light: "#0000" },
-  });
+  const whatsappMessage = `Hi ${m.customer.name}, here's your ${m.tier} membership card (${m.membershipNo}) from Posh Salon. View it here: ${origin}/membership/${m.qrToken}`;
 
   return (
     <div>
@@ -48,7 +48,12 @@ export default async function MembershipCard({
               {m.status}
             </StatusChip>
           }
-          actions={<PrintButton label="Print card" />}
+          actions={
+            <>
+              <WhatsAppSendButton phone={m.customer.phone} message={whatsappMessage} />
+              <PrintButton label="Print card" />
+            </>
+          }
         />
       </div>
 
@@ -56,45 +61,7 @@ export default async function MembershipCard({
         {/* The card itself — the artifact that goes to the client, so the
             maison voice (seal, didone) stays here even though the surrounding
             tool speaks in Inter. */}
-        <Panel className="print-sheet h-fit p-6 sm:p-8">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <Seal size="md" />
-              <div>
-                <p className="font-display text-ui-lg text-ink">Posh Salon</p>
-                <p className="text-meta uppercase text-ink-muted">{m.tier} Membership</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-8 flex flex-wrap items-end justify-between gap-6">
-            <div>
-              <p className="text-meta uppercase text-ink-muted">Member</p>
-              <p className="mt-1 text-ui-lg text-ink">{m.customer.name}</p>
-              <p className="mt-4 text-meta uppercase text-ink-muted">Membership No.</p>
-              <p className="mt-1 font-display text-ui-lg tracking-wide text-gold-shadow">
-                {m.membershipNo}
-              </p>
-              <p className="mt-4 text-meta uppercase text-ink-muted">Wallet Balance</p>
-              <p className="mt-1 font-display text-ui-title tabular-nums text-ink">
-                {formatINR(Number(m.balance))}
-              </p>
-              <p className="mt-1 text-ui-sm text-ink-muted">
-                Redeemable against services only
-              </p>
-            </div>
-            <div
-              role="img"
-              aria-label={`QR code for membership ${m.membershipNo}`}
-              className="h-28 w-28 shrink-0"
-              dangerouslySetInnerHTML={{ __html: qrSvg }}
-            />
-          </div>
-
-          <p className="mt-8 border-t border-warm-line pt-4 text-ui-sm text-ink-muted">
-            {m.plan.name} · expires {m.expiresAt ? formatDate(m.expiresAt) : "—"}
-          </p>
-        </Panel>
+        <MembershipCardPanel membership={m} />
 
         {/* Ledger */}
         <Panel className="print:hidden">

@@ -8,8 +8,10 @@ import { Panel, PanelHeader } from "@/components/admin/ui/Panel";
 import { StatusChip, type ChipTone } from "@/components/admin/ui/StatusChip";
 import { DataTable, tableIdLinkClass, type Column } from "@/components/admin/ui/DataTable";
 import { EmptyState } from "@/components/admin/ui/EmptyState";
+import { WhatsAppSendButton } from "@/components/admin/ui/WhatsAppSendButton";
 import { formatINR } from "@/lib/money";
 import { formatDate, formatSchedule } from "@/lib/format";
+import { getOrigin } from "@/lib/url";
 
 const APPT_TONE: Record<string, ChipTone> = {
   BOOKED: "info", COMPLETED: "success", NO_SHOW: "danger", CANCELLED: "danger",
@@ -22,27 +24,31 @@ export default async function CustomerProfile({
 }) {
   await requireStaff();
   const { id } = await params;
-  const customer = await prisma.customer.findFirst({
-    where: { id, deletedAt: null },
-    include: {
-      memberships: {
-        where: { deletedAt: null },
-        orderBy: { createdAt: "desc" },
-        include: { plan: true, transactions: { orderBy: { createdAt: "desc" }, take: 20 } },
+  const [customer, settings, origin] = await Promise.all([
+    prisma.customer.findFirst({
+      where: { id, deletedAt: null },
+      include: {
+        memberships: {
+          where: { deletedAt: null },
+          orderBy: { createdAt: "desc" },
+          include: { plan: true, transactions: { orderBy: { createdAt: "desc" }, take: 20 } },
+        },
+        invoices: {
+          where: { deletedAt: null },
+          orderBy: { createdAt: "desc" },
+          take: 25,
+        },
+        appointments: {
+          where: { deletedAt: null },
+          orderBy: { startAt: "desc" },
+          take: 10,
+          include: { service: true },
+        },
       },
-      invoices: {
-        where: { deletedAt: null },
-        orderBy: { createdAt: "desc" },
-        take: 25,
-      },
-      appointments: {
-        where: { deletedAt: null },
-        orderBy: { startAt: "desc" },
-        take: 10,
-        include: { service: true },
-      },
-    },
-  });
+    }),
+    prisma.settings.findUniqueOrThrow({ where: { id: "singleton" } }),
+    getOrigin(),
+  ]);
   if (!customer) notFound();
 
   const totalSpend = customer.invoices.reduce((s, i) => s + Number(i.grandTotal), 0);
@@ -99,6 +105,22 @@ export default async function CustomerProfile({
         >
           {i.status}
         </StatusChip>
+      ),
+    },
+    {
+      key: "actions",
+      header: "",
+      align: "right",
+      cell: (i) => (
+        <div className="flex justify-end">
+          <WhatsAppSendButton
+            phone={customer.phone}
+            message={`Hi ${customer.name}, here's your invoice ${i.number} from ${settings.salonName} for ${formatINR(Number(i.grandTotal))}. View it here: ${origin}/invoice/${i.id}`}
+            label={`Send invoice ${i.number} via WhatsApp`}
+            iconOnly
+            variant="ghost"
+          />
+        </div>
       ),
     },
   ];

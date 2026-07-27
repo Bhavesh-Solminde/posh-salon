@@ -20,6 +20,19 @@ const sizes = {
   icon: "h-9 w-9 shrink-0",
 } as const;
 
+/** Shared class vocabulary, for non-`<button>` elements (e.g. link-styled actions) that must look identical to AdminButton. */
+export function adminButtonClass({
+  variant = "primary",
+  size = "md",
+  className = "",
+}: {
+  variant?: keyof typeof variants;
+  size?: keyof typeof sizes;
+  className?: string;
+} = {}): string {
+  return `${base} ${variants[variant]} ${sizes[size]} ${className}`;
+}
+
 export function AdminButton({
   children,
   variant = "primary",

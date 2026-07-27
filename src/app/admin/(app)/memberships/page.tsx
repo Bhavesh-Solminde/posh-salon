@@ -7,9 +7,11 @@ import { Panel } from "@/components/admin/ui/Panel";
 import { DataTable, tableIdLinkClass, type Column } from "@/components/admin/ui/DataTable";
 import { StatusChip } from "@/components/admin/ui/StatusChip";
 import { EmptyState } from "@/components/admin/ui/EmptyState";
+import { WhatsAppSendButton } from "@/components/admin/ui/WhatsAppSendButton";
 import { MembershipCreate } from "./_components/MembershipCreate";
 import { formatINR } from "@/lib/money";
 import { formatDate } from "@/lib/format";
+import { getOrigin } from "@/lib/url";
 
 type Row = Awaited<ReturnType<typeof load>>[number];
 async function load() {
@@ -22,10 +24,11 @@ async function load() {
 
 export default async function MembershipsPage() {
   await requireStaff();
-  const [memberships, customers, plans] = await Promise.all([
+  const [memberships, customers, plans, origin] = await Promise.all([
     load(),
     prisma.customer.findMany({ where: { deletedAt: null }, orderBy: { name: "asc" }, take: 500 }),
     prisma.membershipPlan.findMany({ where: { deletedAt: null, isActive: true }, orderBy: { price: "asc" } }),
+    getOrigin(),
   ]);
 
   const createAction = (
@@ -79,6 +82,22 @@ export default async function MembershipsPage() {
         >
           {m.status}
         </StatusChip>
+      ),
+    },
+    {
+      key: "actions",
+      header: "",
+      align: "right",
+      cell: (m) => (
+        <div className="flex justify-end">
+          <WhatsAppSendButton
+            phone={m.customer.phone}
+            message={`Hi ${m.customer.name}, here's your ${m.tier} membership card (${m.membershipNo}) from Posh Salon. View it here: ${origin}/membership/${m.qrToken}`}
+            label={`Send membership ${m.membershipNo} via WhatsApp`}
+            iconOnly
+            variant="ghost"
+          />
+        </div>
       ),
     },
   ];

@@ -8,6 +8,7 @@ import { DataTable, type Column } from "@/components/admin/ui/DataTable";
 import { StatusChip } from "@/components/admin/ui/StatusChip";
 import { EmptyState } from "@/components/admin/ui/EmptyState";
 import { AdminButton } from "@/components/admin/AdminButton";
+import { WhatsAppSendButton } from "@/components/admin/ui/WhatsAppSendButton";
 import {
   FilterBar,
   FilterField,
@@ -18,6 +19,7 @@ import { ExpenseModal } from "./_components/ExpenseModal";
 import { buildWhere, loadLedger } from "./_lib";
 import { formatINR } from "@/lib/money";
 import { formatDate } from "@/lib/format";
+import { getOrigin } from "@/lib/url";
 
 type Row = Awaited<ReturnType<typeof loadLedger>>[number];
 
@@ -44,6 +46,28 @@ export default async function BillingHistoryPage({
   const totalIncome = Number(income._sum.amount ?? 0);
   const totalExpense = Number(expense._sum.amount ?? 0);
   const net = totalIncome - totalExpense;
+
+  // FinancialTransaction.invoiceId/membershipId are plain strings, not Prisma
+  // relations, so the linked invoice/membership + customer need a manual batch fetch.
+  const invoiceIds = [...new Set(rows.map((r) => r.invoiceId).filter((v): v is string => !!v))];
+  const membershipIds = [
+    ...new Set(rows.map((r) => r.membershipId).filter((v): v is string => !!v)),
+  ];
+  const [invoices, memberships, settings, origin] = await Promise.all([
+    invoiceIds.length
+      ? prisma.invoice.findMany({ where: { id: { in: invoiceIds } }, include: { customer: true } })
+      : Promise.resolve([]),
+    membershipIds.length
+      ? prisma.membership.findMany({
+          where: { id: { in: membershipIds } },
+          include: { customer: true },
+        })
+      : Promise.resolve([]),
+    prisma.settings.findUniqueOrThrow({ where: { id: "singleton" } }),
+    getOrigin(),
+  ]);
+  const invoiceById = new Map(invoices.map((i) => [i.id, i]));
+  const membershipById = new Map(memberships.map((m) => [m.id, m]));
 
   const qs = new URLSearchParams(
     Object.entries(f).filter(([, v]) => v) as [string, string][],
@@ -83,6 +107,42 @@ export default async function BillingHistoryPage({
           {formatINR(Number(r.amount))}
         </span>
       ),
+    },
+    {
+      key: "actions",
+      header: "",
+      align: "right",
+      cell: (r) => {
+        const invoice = r.invoiceId ? invoiceById.get(r.invoiceId) : undefined;
+        if (invoice?.customer) {
+          return (
+            <div className="flex justify-end">
+              <WhatsAppSendButton
+                phone={invoice.customer.phone}
+                message={`Hi ${invoice.customer.name}, here's your invoice ${invoice.number} from ${settings.salonName} for ${formatINR(Number(invoice.grandTotal))}. View it here: ${origin}/invoice/${invoice.id}`}
+                label={`Send invoice ${invoice.number} via WhatsApp`}
+                iconOnly
+                variant="ghost"
+              />
+            </div>
+          );
+        }
+        const membership = r.membershipId ? membershipById.get(r.membershipId) : undefined;
+        if (membership?.customer) {
+          return (
+            <div className="flex justify-end">
+              <WhatsAppSendButton
+                phone={membership.customer.phone}
+                message={`Hi ${membership.customer.name}, here's your ${membership.tier} membership card (${membership.membershipNo}) from ${settings.salonName}. View it here: ${origin}/membership/${membership.qrToken}`}
+                label={`Send membership ${membership.membershipNo} via WhatsApp`}
+                iconOnly
+                variant="ghost"
+              />
+            </div>
+          );
+        }
+        return null;
+      },
     },
   ];
 
