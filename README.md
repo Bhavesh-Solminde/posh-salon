@@ -26,3 +26,4 @@ Open [http://localhost:3000](http://localhost:3000) to view it.
 
 Deploy on [Vercel](https://vercel.com/docs/deployments) or any Next.js-compatible host.
 # posh-salon
+# posh-salon
