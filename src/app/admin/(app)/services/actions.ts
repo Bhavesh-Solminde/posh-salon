@@ -4,7 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireStaff, requireRole } from "@/lib/session";
-import { ok, fail, zodFail, type ActionResult } from "@/lib/actions";
+import { ok, fail, zodFail, withErrorLogging, type ActionResult } from "@/lib/actions";
 
 const serviceSchema = z.object({
   id: z.string().optional(),
@@ -15,10 +15,10 @@ const serviceSchema = z.object({
   description: z.string().optional(),
 });
 
-export async function saveService(
+export const saveService = withErrorLogging("saveService", async (
   _prev: ActionResult,
   formData: FormData,
-): Promise<ActionResult> {
+): Promise<ActionResult> => {
   await requireStaff();
   const parsed = serviceSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return zodFail(parsed.error);
@@ -35,9 +35,9 @@ export async function saveService(
   revalidatePath("/admin/services");
   revalidatePath("/");
   return ok(id ? "Service updated." : "Service created.");
-}
+});
 
-export async function deleteService(id: string): Promise<ActionResult> {
+export const deleteService = withErrorLogging("deleteService", async (id: string): Promise<ActionResult> => {
   await requireStaff();
   await prisma.service.update({
     where: { id },
@@ -46,12 +46,12 @@ export async function deleteService(id: string): Promise<ActionResult> {
   revalidatePath("/admin/services");
   revalidatePath("/");
   return ok("Service removed.");
-}
+});
 
-export async function saveCategory(
+export const saveCategory = withErrorLogging("saveCategory", async (
   _prev: ActionResult,
   formData: FormData,
-): Promise<ActionResult> {
+): Promise<ActionResult> => {
   await requireStaff();
   const name = String(formData.get("name") ?? "").trim();
   if (!name) return fail("Category name is required.", { name: "Required." });
@@ -61,13 +61,13 @@ export async function saveCategory(
   revalidatePath("/admin/services");
   revalidatePath("/");
   return ok("Category added.");
-}
+});
 
-export async function deleteCategory(id: string): Promise<ActionResult> {
+export const deleteCategory = withErrorLogging("deleteCategory", async (id: string): Promise<ActionResult> => {
   await requireRole("MANAGER");
   await prisma.service.updateMany({ where: { categoryId: id }, data: { categoryId: null } });
   await prisma.serviceCategory.delete({ where: { id } });
   revalidatePath("/admin/services");
   revalidatePath("/");
   return ok("Category removed.");
-}
+});

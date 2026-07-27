@@ -4,7 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireRole } from "@/lib/session";
-import { ok, zodFail, type ActionResult } from "@/lib/actions";
+import { ok, zodFail, withErrorLogging, type ActionResult } from "@/lib/actions";
 
 const settingsSchema = z.object({
   salonName: z.string().min(1, "Salon name is required."),
@@ -19,10 +19,10 @@ const settingsSchema = z.object({
   invoicePrefix: z.string().min(1, "Prefix is required."),
 });
 
-export async function updateSettings(
+export const updateSettings = withErrorLogging("updateSettings", async (
   _prev: ActionResult,
   formData: FormData,
-): Promise<ActionResult> {
+): Promise<ActionResult> => {
   await requireRole("ADMIN");
   const parsed = settingsSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return zodFail(parsed.error);
@@ -47,7 +47,7 @@ export async function updateSettings(
   revalidatePath("/admin/settings");
   revalidatePath("/");
   return ok("Settings saved.");
-}
+});
 
 const planSchema = z.object({
   id: z.string().optional(),
@@ -59,10 +59,10 @@ const planSchema = z.object({
   discountPct: z.coerce.number().min(0).max(100),
 });
 
-export async function savePlan(
+export const savePlan = withErrorLogging("savePlan", async (
   _prev: ActionResult,
   formData: FormData,
-): Promise<ActionResult> {
+): Promise<ActionResult> => {
   await requireRole("ADMIN");
   const parsed = planSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return zodFail(parsed.error);
@@ -77,9 +77,9 @@ export async function savePlan(
   revalidatePath("/admin/settings");
   revalidatePath("/");
   return ok(id ? "Plan updated." : "Plan created.");
-}
+});
 
-export async function deletePlan(id: string): Promise<ActionResult> {
+export const deletePlan = withErrorLogging("deletePlan", async (id: string): Promise<ActionResult> => {
   await requireRole("ADMIN");
   await prisma.membershipPlan.update({
     where: { id },
@@ -88,4 +88,4 @@ export async function deletePlan(id: string): Promise<ActionResult> {
   revalidatePath("/admin/settings");
   revalidatePath("/");
   return ok("Plan removed.");
-}
+});

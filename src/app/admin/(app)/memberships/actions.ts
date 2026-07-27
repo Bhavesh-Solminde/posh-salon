@@ -5,7 +5,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { prisma, TX_OPTS } from "@/lib/db";
 import { requireStaff } from "@/lib/session";
-import { ok, fail, zodFail, type ActionResult } from "@/lib/actions";
+import { ok, fail, zodFail, withErrorLogging, type ActionResult } from "@/lib/actions";
 
 const createSchema = z.object({
   customerId: z.string().min(1, "Choose a customer."),
@@ -14,10 +14,10 @@ const createSchema = z.object({
   notes: z.string().optional(),
 });
 
-export async function createMembership(
+export const createMembership = withErrorLogging("createMembership", async (
   _prev: ActionResult,
   formData: FormData,
-): Promise<ActionResult> {
+): Promise<ActionResult> => {
   await requireStaff();
   const parsed = createSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return zodFail(parsed.error);
@@ -72,4 +72,4 @@ export async function createMembership(
   revalidatePath("/admin/memberships");
   revalidatePath(`/admin/customers/${customerId}`);
   return ok(`Membership created for ${customer.name}.`);
-}
+});

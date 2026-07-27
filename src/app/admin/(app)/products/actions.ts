@@ -4,7 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { prisma, TX_OPTS } from "@/lib/db";
 import { requireStaff } from "@/lib/session";
-import { ok, zodFail, type ActionResult } from "@/lib/actions";
+import { ok, zodFail, withErrorLogging, type ActionResult } from "@/lib/actions";
 
 const productSchema = z.object({
   id: z.string().optional(),
@@ -17,10 +17,10 @@ const productSchema = z.object({
   reorderLevel: z.coerce.number().int().min(0),
 });
 
-export async function saveProduct(
+export const saveProduct = withErrorLogging("saveProduct", async (
   _prev: ActionResult,
   formData: FormData,
-): Promise<ActionResult> {
+): Promise<ActionResult> => {
   await requireStaff();
   const parsed = productSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return zodFail(parsed.error);
@@ -35,9 +35,9 @@ export async function saveProduct(
   else await prisma.product.create({ data });
   revalidatePath("/admin/products");
   return ok(id ? "Product updated." : "Product created.");
-}
+});
 
-export async function deleteProduct(id: string): Promise<ActionResult> {
+export const deleteProduct = withErrorLogging("deleteProduct", async (id: string): Promise<ActionResult> => {
   await requireStaff();
   await prisma.product.update({
     where: { id },
@@ -45,7 +45,7 @@ export async function deleteProduct(id: string): Promise<ActionResult> {
   });
   revalidatePath("/admin/products");
   return ok("Product removed.");
-}
+});
 
 const stockSchema = z.object({
   productId: z.string().min(1),
@@ -58,10 +58,10 @@ const stockSchema = z.object({
 /** Record a stock movement (supplier restock or manual adjustment) and keep the
  *  cached Product.stock in sync. A restock also posts a supplier-purchase expense
  *  to the finance ledger. All atomic. */
-export async function recordStock(
+export const recordStock = withErrorLogging("recordStock", async (
   _prev: ActionResult,
   formData: FormData,
-): Promise<ActionResult> {
+): Promise<ActionResult> => {
   await requireStaff();
   const parsed = stockSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return zodFail(parsed.error);
@@ -104,4 +104,4 @@ export async function recordStock(
 
   revalidatePath("/admin/products");
   return ok(type === "PURCHASE" ? "Stock added." : "Stock adjusted.");
-}
+});

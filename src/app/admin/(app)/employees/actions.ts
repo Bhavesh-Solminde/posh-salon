@@ -4,7 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireRole } from "@/lib/session";
-import { ok, zodFail, type ActionResult } from "@/lib/actions";
+import { ok, zodFail, withErrorLogging, type ActionResult } from "@/lib/actions";
 
 const employeeSchema = z.object({
   id: z.string().optional(),
@@ -14,10 +14,10 @@ const employeeSchema = z.object({
   joinedAt: z.string().optional(),
 });
 
-export async function saveEmployee(
+export const saveEmployee = withErrorLogging("saveEmployee", async (
   _prev: ActionResult,
   formData: FormData,
-): Promise<ActionResult> {
+): Promise<ActionResult> => {
   await requireRole("MANAGER");
   const parsed = employeeSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return zodFail(parsed.error);
@@ -32,20 +32,20 @@ export async function saveEmployee(
   else await prisma.employee.create({ data });
   revalidatePath("/admin/employees");
   return ok(id ? "Employee updated." : "Employee added.");
-}
+});
 
-export async function deleteEmployee(id: string): Promise<ActionResult> {
+export const deleteEmployee = withErrorLogging("deleteEmployee", async (id: string): Promise<ActionResult> => {
   await requireRole("MANAGER");
   await prisma.employee.update({ where: { id }, data: { deletedAt: new Date(), isActive: false } });
   revalidatePath("/admin/employees");
   return ok("Employee removed.");
-}
+});
 
-export async function markAttendance(
+export const markAttendance = withErrorLogging("markAttendance", async (
   employeeId: string,
   dateStr: string,
   status: "PRESENT" | "ABSENT" | "LEAVE",
-): Promise<ActionResult> {
+): Promise<ActionResult> => {
   await requireRole("MANAGER");
   const date = new Date(dateStr + "T00:00:00");
   await prisma.attendanceRecord.upsert({
@@ -55,4 +55,4 @@ export async function markAttendance(
   });
   revalidatePath("/admin/employees");
   return ok("Attendance saved.");
-}
+});

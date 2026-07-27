@@ -4,7 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireStaff } from "@/lib/session";
-import { ok, fail, zodFail, type ActionResult } from "@/lib/actions";
+import { ok, fail, zodFail, withErrorLogging, type ActionResult } from "@/lib/actions";
 
 const customerSchema = z.object({
   id: z.string().optional(),
@@ -20,10 +20,10 @@ const customerSchema = z.object({
 
 const toDate = (s?: string) => (s ? new Date(s) : null);
 
-export async function saveCustomer(
+export const saveCustomer = withErrorLogging("saveCustomer", async (
   _prev: ActionResult,
   formData: FormData,
-): Promise<ActionResult> {
+): Promise<ActionResult> => {
   await requireStaff();
   const parsed = customerSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return zodFail(parsed.error);
@@ -53,11 +53,11 @@ export async function saveCustomer(
   revalidatePath("/admin/customers");
   revalidatePath(`/admin/customers/${saved.id}`);
   return ok(id ? "Customer updated." : "Customer registered.");
-}
+});
 
-export async function deleteCustomer(id: string): Promise<ActionResult> {
+export const deleteCustomer = withErrorLogging("deleteCustomer", async (id: string): Promise<ActionResult> => {
   await requireStaff();
   await prisma.customer.update({ where: { id }, data: { deletedAt: new Date() } });
   revalidatePath("/admin/customers");
   return ok("Customer removed.");
-}
+});

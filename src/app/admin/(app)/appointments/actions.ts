@@ -4,7 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireStaff } from "@/lib/session";
-import { ok, zodFail, type ActionResult } from "@/lib/actions";
+import { ok, zodFail, withErrorLogging, type ActionResult } from "@/lib/actions";
 
 const schema = z.object({
   id: z.string().optional(),
@@ -18,10 +18,10 @@ const schema = z.object({
   notes: z.string().optional(),
 });
 
-export async function saveAppointment(
+export const saveAppointment = withErrorLogging("saveAppointment", async (
   _prev: ActionResult,
   formData: FormData,
-): Promise<ActionResult> {
+): Promise<ActionResult> => {
   await requireStaff();
   const parsed = schema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return zodFail(parsed.error);
@@ -46,21 +46,21 @@ export async function saveAppointment(
   else await prisma.appointment.create({ data });
   revalidatePath("/admin/appointments");
   return ok(id ? "Appointment updated." : "Appointment booked.");
-}
+});
 
-export async function setAppointmentStatus(
+export const setAppointmentStatus = withErrorLogging("setAppointmentStatus", async (
   id: string,
   status: "BOOKED" | "COMPLETED" | "NO_SHOW" | "CANCELLED",
-): Promise<ActionResult> {
+): Promise<ActionResult> => {
   await requireStaff();
   await prisma.appointment.update({ where: { id }, data: { status } });
   revalidatePath("/admin/appointments");
   return ok("Status updated.");
-}
+});
 
-export async function deleteAppointment(id: string): Promise<ActionResult> {
+export const deleteAppointment = withErrorLogging("deleteAppointment", async (id: string): Promise<ActionResult> => {
   await requireStaff();
   await prisma.appointment.update({ where: { id }, data: { deletedAt: new Date() } });
   revalidatePath("/admin/appointments");
   return ok("Appointment removed.");
-}
+});

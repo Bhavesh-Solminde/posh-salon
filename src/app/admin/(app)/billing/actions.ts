@@ -4,6 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { prisma, TX_OPTS } from "@/lib/db";
 import { requireStaff } from "@/lib/session";
+import { withErrorLogging } from "@/lib/actions";
 import {
   computeInvoiceTotals,
   capWalletRedemption,
@@ -33,7 +34,7 @@ export type CreateInvoiceResult =
   | { ok: true; invoiceId: string; number: string }
   | { ok: false; error: string };
 
-export async function createInvoice(input: unknown): Promise<CreateInvoiceResult> {
+export const createInvoice = withErrorLogging("createInvoice", async (input: unknown): Promise<CreateInvoiceResult> => {
   const user = await requireStaff();
   const parsed = payloadSchema.safeParse(input);
   if (!parsed.success) {
@@ -178,4 +179,4 @@ export async function createInvoice(input: unknown): Promise<CreateInvoiceResult
   if (customerId) revalidatePath(`/admin/customers/${customerId}`);
 
   return { ok: true, invoiceId: invoice.id, number: invoice.number };
-}
+});

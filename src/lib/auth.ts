@@ -6,6 +6,10 @@ import { prisma } from "./db";
 export const auth = betterAuth({
   database: prismaAdapter(prisma, { provider: "postgresql" }),
   trustedOrigins: ["https://poshsalon.co.in", "https://www.poshsalon.co.in"],
+  logger: {
+    level: "debug",
+    disabled: false,
+  },
   // Staff-only tool: no public sign-up. Accounts are seeded / created by an admin.
   emailAndPassword: {
     enabled: true,

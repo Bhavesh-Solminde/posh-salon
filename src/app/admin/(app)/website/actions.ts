@@ -4,7 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireRole } from "@/lib/session";
-import { ok, zodFail, type ActionResult } from "@/lib/actions";
+import { ok, zodFail, withErrorLogging, type ActionResult } from "@/lib/actions";
 
 const offerSchema = z.object({
   id: z.string().optional(),
@@ -23,7 +23,7 @@ const testimonialSchema = z.object({
   sortOrder: z.coerce.number().int().default(0),
 });
 
-export async function saveOffer(_prev: ActionResult, formData: FormData): Promise<ActionResult> {
+export const saveOffer = withErrorLogging("saveOffer", async (_prev: ActionResult, formData: FormData): Promise<ActionResult> => {
   await requireRole("MANAGER");
   const parsed = offerSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return zodFail(parsed.error);
@@ -39,17 +39,17 @@ export async function saveOffer(_prev: ActionResult, formData: FormData): Promis
   revalidatePath("/admin/website");
   revalidatePath("/");
   return ok(id ? "Offer updated." : "Offer added.");
-}
+});
 
-export async function deleteOffer(id: string): Promise<ActionResult> {
+export const deleteOffer = withErrorLogging("deleteOffer", async (id: string): Promise<ActionResult> => {
   await requireRole("MANAGER");
   await prisma.offer.update({ where: { id }, data: { deletedAt: new Date(), active: false } });
   revalidatePath("/admin/website");
   revalidatePath("/");
   return ok("Offer removed.");
-}
+});
 
-export async function saveTestimonial(_prev: ActionResult, formData: FormData): Promise<ActionResult> {
+export const saveTestimonial = withErrorLogging("saveTestimonial", async (_prev: ActionResult, formData: FormData): Promise<ActionResult> => {
   await requireRole("MANAGER");
   const parsed = testimonialSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return zodFail(parsed.error);
@@ -64,12 +64,12 @@ export async function saveTestimonial(_prev: ActionResult, formData: FormData): 
   revalidatePath("/admin/website");
   revalidatePath("/");
   return ok(id ? "Testimonial updated." : "Testimonial added.");
-}
+});
 
-export async function deleteTestimonial(id: string): Promise<ActionResult> {
+export const deleteTestimonial = withErrorLogging("deleteTestimonial", async (id: string): Promise<ActionResult> => {
   await requireRole("MANAGER");
   await prisma.testimonial.update({ where: { id }, data: { deletedAt: new Date(), active: false } });
   revalidatePath("/admin/website");
   revalidatePath("/");
   return ok("Testimonial removed.");
-}
+});

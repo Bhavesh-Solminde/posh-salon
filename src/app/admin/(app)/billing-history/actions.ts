@@ -4,7 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireStaff } from "@/lib/session";
-import { ok, zodFail, type ActionResult } from "@/lib/actions";
+import { ok, zodFail, withErrorLogging, type ActionResult } from "@/lib/actions";
 
 const expenseSchema = z.object({
   category: z.enum(["MISC_EXPENSE", "SUPPLIER_PURCHASE"]),
@@ -13,10 +13,10 @@ const expenseSchema = z.object({
   occurredAt: z.string().optional(),
 });
 
-export async function recordExpense(
+export const recordExpense = withErrorLogging("recordExpense", async (
   _prev: ActionResult,
   formData: FormData,
-): Promise<ActionResult> {
+): Promise<ActionResult> => {
   const user = await requireStaff();
   const parsed = expenseSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return zodFail(parsed.error);
@@ -35,4 +35,4 @@ export async function recordExpense(
   revalidatePath("/admin/billing-history");
   revalidatePath("/admin/dashboard");
   return ok("Expense recorded.");
-}
+});

@@ -25,3 +25,20 @@ export function zodFail(err: ZodError): ActionResult {
   }
   return { ok: false, error: "Please fix the highlighted fields.", fieldErrors };
 }
+
+/** Wrap a server action so unexpected errors (DB, auth, etc.) are logged with
+ *  the action's name before rethrowing, instead of surfacing as a bare stack
+ *  trace with no context in the Vercel function logs. */
+export function withErrorLogging<Args extends unknown[], R>(
+  name: string,
+  fn: (...args: Args) => Promise<R>,
+): (...args: Args) => Promise<R> {
+  return async (...args: Args) => {
+    try {
+      return await fn(...args);
+    } catch (err) {
+      console.error(`[action:${name}] failed:`, err);
+      throw err;
+    }
+  };
+}
