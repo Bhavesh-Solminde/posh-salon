@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { History } from "lucide-react";
 import { prisma } from "@/lib/db";
@@ -9,6 +10,7 @@ import { StatusChip } from "@/components/admin/ui/StatusChip";
 import { EmptyState } from "@/components/admin/ui/EmptyState";
 import { AdminButton } from "@/components/admin/AdminButton";
 import { WhatsAppSendButton } from "@/components/admin/ui/WhatsAppSendButton";
+import { TableSkeleton, Skeleton } from "@/components/admin/ui/Skeleton";
 import {
   FilterBar,
   FilterField,
@@ -16,7 +18,7 @@ import {
   filterControlClass,
 } from "@/components/admin/ui/FilterBar";
 import { ExpenseModal } from "./_components/ExpenseModal";
-import { buildWhere, loadLedger } from "./_lib";
+import { buildWhere, loadLedger, type LedgerFilters } from "./_lib";
 import { formatINR } from "@/lib/money";
 import { formatDate } from "@/lib/format";
 import { getOrigin } from "@/lib/url";
@@ -39,7 +41,67 @@ export default async function BillingHistoryPage({
 }) {
   await requireStaff();
   const sp = await searchParams;
-  const f = { type: sp.type, category: sp.category, from: sp.from, to: sp.to, q: sp.q, method: sp.method };
+  const f: LedgerFilters = { type: sp.type, category: sp.category, from: sp.from, to: sp.to, q: sp.q, method: sp.method };
+
+  const qs = new URLSearchParams(
+    Object.entries(f).filter(([, v]) => v) as [string, string][],
+  ).toString();
+
+  return (
+    <div>
+      <PageHeader
+        title="Billing History"
+        description="Every income and expense transaction. Filter, search, and export."
+        actions={
+          <>
+            <ExpenseModal />
+            {/* A real download: `prefetch={false}` keeps the router from
+                fetching a CSV attachment, and `download` keeps the cashier on
+                this screen instead of navigating to the file. */}
+            <Link
+              href={`/admin/billing-history/export${qs ? `?${qs}` : ""}`}
+              prefetch={false}
+              download
+            >
+              <AdminButton variant="secondary">Export CSV</AdminButton>
+            </Link>
+          </>
+        }
+      />
+      <div className="space-y-6 p-4 sm:p-6">
+        {/* The summary cards and table both depend on the same slow, filtered
+            Neon queries — the header/filter shell above renders immediately
+            (nothing here needs the DB), and this is the only part that waits. */}
+        <Suspense fallback={<LedgerFallback />}>
+          <LedgerContent f={f} qs={qs} />
+        </Suspense>
+      </div>
+    </div>
+  );
+}
+
+function LedgerFallback() {
+  return (
+    <>
+      <div className="grid gap-4 sm:grid-cols-3">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <Panel key={i} className="p-5">
+            <Skeleton className="h-3 w-16" />
+            <Skeleton className="mt-2.5 h-6 w-24" />
+          </Panel>
+        ))}
+      </div>
+      <Panel>
+        <div className="border-b border-warm-line px-4 py-4 sm:px-6">
+          <Skeleton className="h-9 w-full" />
+        </div>
+        <TableSkeleton />
+      </Panel>
+    </>
+  );
+}
+
+async function LedgerContent({ f, qs }: { f: LedgerFilters; qs: string }) {
   const where = buildWhere(f);
 
   const [rows, income, expense] = await Promise.all([
@@ -72,10 +134,6 @@ export default async function BillingHistoryPage({
   ]);
   const invoiceById = new Map(invoices.map((i) => [i.id, i]));
   const membershipById = new Map(memberships.map((m) => [m.id, m]));
-
-  const qs = new URLSearchParams(
-    Object.entries(f).filter(([, v]) => v) as [string, string][],
-  ).toString();
 
   const columns: Column<Row>[] = [
     {
@@ -162,111 +220,90 @@ export default async function BillingHistoryPage({
   ];
 
   return (
-    <div>
-      <PageHeader
-        title="Billing History"
-        description="Every income and expense transaction. Filter, search, and export."
-        actions={
-          <>
-            <ExpenseModal />
-            {/* A real download: `prefetch={false}` keeps the router from
-                fetching a CSV attachment, and `download` keeps the cashier on
-                this screen instead of navigating to the file. */}
-            <Link
-              href={`/admin/billing-history/export${qs ? `?${qs}` : ""}`}
-              prefetch={false}
-              download
-            >
-              <AdminButton variant="secondary">Export CSV</AdminButton>
-            </Link>
-          </>
-        }
-      />
-      <div className="space-y-6 p-4 sm:p-6">
-        <div className="grid gap-4 sm:grid-cols-3">
-          <SummaryCard label="Income" value={formatINR(totalIncome)} className="text-success" />
-          <SummaryCard label="Expense" value={formatINR(totalExpense)} className="text-danger" />
-          <SummaryCard
-            label="Net"
-            value={formatINR(net)}
-            className={net >= 0 ? "text-success" : "text-danger"}
-          />
-        </div>
-
-        <Panel>
-          <FilterBar clearHref={qs ? "/admin/billing-history" : null}>
-            <FilterField label="Type" htmlFor="ledger-type">
-              <select
-                id="ledger-type"
-                name="type"
-                defaultValue={f.type ?? ""}
-                className={filterControlClass}
-              >
-                <option value="">All</option>
-                <option value="INCOME">Income</option>
-                <option value="EXPENSE">Expense</option>
-              </select>
-            </FilterField>
-            <FilterField label="Method" htmlFor="ledger-method">
-              <select
-                id="ledger-method"
-                name="method"
-                defaultValue={f.method ?? ""}
-                className={filterControlClass}
-              >
-                <option value="">All</option>
-                <option value="CASH">Cash</option>
-                <option value="UPI">UPI</option>
-                <option value="CARD">Card</option>
-                <option value="MIXED">Mixed</option>
-              </select>
-            </FilterField>
-            <FilterField label="From" htmlFor="ledger-from">
-              <input
-                id="ledger-from"
-                type="date"
-                name="from"
-                defaultValue={f.from ?? ""}
-                className={filterControlClass}
-              />
-            </FilterField>
-            <FilterField label="To" htmlFor="ledger-to">
-              <input
-                id="ledger-to"
-                type="date"
-                name="to"
-                defaultValue={f.to ?? ""}
-                className={filterControlClass}
-              />
-            </FilterField>
-            <FilterField label="Search" htmlFor="ledger-q" grow>
-              <SearchInput id="ledger-q" defaultValue={f.q ?? ""} placeholder="Description" />
-            </FilterField>
-          </FilterBar>
-          <DataTable
-            caption="Income and expense transactions"
-            columns={columns}
-            rows={rows}
-            getRowKey={(r) => r.id}
-            empty={
-              qs ? (
-                <EmptyState
-                  icon={History}
-                  title="No transactions match these filters"
-                  message="Widen the date range or clear the filters to see the full ledger."
-                />
-              ) : (
-                <EmptyState
-                  icon={History}
-                  title="No transactions"
-                  message="Income and expenses will appear here as you bill customers and record costs."
-                />
-              )
-            }
-          />
-        </Panel>
+    <>
+      <div className="grid gap-4 sm:grid-cols-3">
+        <SummaryCard label="Income" value={formatINR(totalIncome)} className="text-success" />
+        <SummaryCard label="Expense" value={formatINR(totalExpense)} className="text-danger" />
+        <SummaryCard
+          label="Net"
+          value={formatINR(net)}
+          className={net >= 0 ? "text-success" : "text-danger"}
+        />
       </div>
-    </div>
+
+      <Panel>
+        <FilterBar clearHref={qs ? "/admin/billing-history" : null}>
+          <FilterField label="Type" htmlFor="ledger-type">
+            <select
+              id="ledger-type"
+              name="type"
+              defaultValue={f.type ?? ""}
+              className={filterControlClass}
+            >
+              <option value="">All</option>
+              <option value="INCOME">Income</option>
+              <option value="EXPENSE">Expense</option>
+            </select>
+          </FilterField>
+          <FilterField label="Method" htmlFor="ledger-method">
+            <select
+              id="ledger-method"
+              name="method"
+              defaultValue={f.method ?? ""}
+              className={filterControlClass}
+            >
+              <option value="">All</option>
+              <option value="CASH">Cash</option>
+              <option value="UPI">UPI</option>
+              <option value="CARD">Card</option>
+              <option value="MIXED">Mixed</option>
+            </select>
+          </FilterField>
+          <FilterField label="From" htmlFor="ledger-from">
+            <input
+              id="ledger-from"
+              type="date"
+              name="from"
+              defaultValue={f.from ?? ""}
+              className={filterControlClass}
+            />
+          </FilterField>
+          <FilterField label="To" htmlFor="ledger-to">
+            <input
+              id="ledger-to"
+              type="date"
+              name="to"
+              defaultValue={f.to ?? ""}
+              className={filterControlClass}
+            />
+          </FilterField>
+          <FilterField label="Search" htmlFor="ledger-q" grow>
+            <SearchInput id="ledger-q" defaultValue={f.q ?? ""} placeholder="Description" />
+          </FilterField>
+        </FilterBar>
+        <DataTable
+          caption="Income and expense transactions"
+          columns={columns}
+          rows={rows}
+          getRowKey={(r) => r.id}
+          empty={
+            qs ? (
+              <EmptyState
+                icon={History}
+                title="No transactions match these filters"
+                message="Widen the date range or clear the filters to see the full ledger."
+              />
+            ) : (
+              <EmptyState
+                icon={History}
+                title="No transactions"
+                message="Income and expenses will appear here as you bill customers and record costs."
+              />
+            )
+          }
+        />
+      </Panel>
+    </>
   );
 }
 

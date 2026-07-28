@@ -15,15 +15,31 @@ const inter = Inter({
   weight: ["400", "500", "600"],
 });
 
+const SITE_URL = "https://www.poshsalon.co.in";
+const TITLE = "Posh Salon — Premier Hair, Skin & Makeup Atelier";
+const DESCRIPTION =
+  "Posh Salon is a premium hair, skin & makeup atelier. Signature facials, bridal and HD makeup, hair artistry, and a services-only membership wallet — an experience extended, not sold.";
+
 export const metadata: Metadata = {
-  title: "Posh Salon — Premier Hair, Skin & Makeup Atelier",
-  description:
-    "Posh Salon is a premium hair, skin & makeup atelier. Signature treatments, a services-only membership wallet, and an experience extended, not sold.",
+  metadataBase: new URL(SITE_URL),
+  title: TITLE,
+  description: DESCRIPTION,
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
-    title: "Posh Salon — Premier Hair, Skin & Makeup Atelier",
-    description:
-      "Signature treatments, a services-only membership wallet, and a luxury salon experience.",
+    title: TITLE,
+    description: DESCRIPTION,
     type: "website",
+    url: SITE_URL,
+    siteName: "Posh Salon",
+    images: [{ url: "/posh-salon-seal.png" }],
+  },
+  twitter: {
+    card: "summary",
+    title: TITLE,
+    description: DESCRIPTION,
+    images: ["/posh-salon-seal.png"],
   },
 };
 
