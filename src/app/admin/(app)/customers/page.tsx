@@ -19,6 +19,10 @@ const PAGE_LIMIT = 100;
 type Row = Awaited<ReturnType<typeof loadCustomers>>[number];
 
 async function loadCustomers(q: string) {
+  // A handheld scanner "types" the QR's decoded text straight into this
+  // search box — now that the QR encodes the membership's full URL rather
+  // than a bare token, pull the token back out of the last path segment.
+  const qrCandidate = q.includes("/") ? (q.split("/").pop() ?? q) : q;
   return prisma.customer.findMany({
     where: {
       deletedAt: null,
@@ -28,7 +32,7 @@ async function loadCustomers(q: string) {
               { name: { contains: q, mode: "insensitive" as const } },
               { phone: { contains: q } },
               { memberships: { some: { membershipNo: q } } },
-              { memberships: { some: { qrToken: q } } },
+              { memberships: { some: { qrToken: qrCandidate } } },
             ],
           }
         : {}),

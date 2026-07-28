@@ -5,7 +5,7 @@ import { POS } from "./_components/POS";
 
 export default async function BillingPage() {
   await requireStaff();
-  const [services, products, customers, settings] = await Promise.all([
+  const [services, products, customers, employees, settings] = await Promise.all([
     prisma.service.findMany({ where: { deletedAt: null, isActive: true }, orderBy: { name: "asc" } }),
     prisma.product.findMany({
       where: { deletedAt: null, isActive: true, use: { in: ["RETAIL", "BOTH"] } },
@@ -16,6 +16,10 @@ export default async function BillingPage() {
       orderBy: { name: "asc" },
       take: 500,
       include: { memberships: { where: { deletedAt: null, status: "ACTIVE" }, orderBy: { createdAt: "desc" }, take: 1 } },
+    }),
+    prisma.employee.findMany({
+      where: { deletedAt: null, isActive: true },
+      orderBy: { name: "asc" },
     }),
     prisma.settings.findUniqueOrThrow({ where: { id: "singleton" } }),
   ]);
@@ -34,6 +38,7 @@ export default async function BillingPage() {
           phone: c.phone,
           walletBalance: c.memberships[0] ? Number(c.memberships[0].balance) : null,
         }))}
+        employees={employees.map((e) => ({ id: e.id, name: e.name }))}
       />
     </div>
   );

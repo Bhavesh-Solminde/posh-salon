@@ -41,18 +41,22 @@ export const deleteEmployee = withErrorLogging("deleteEmployee", async (id: stri
   return ok("Employee removed.");
 });
 
-export const markAttendance = withErrorLogging("markAttendance", async (
-  employeeId: string,
+export const markAttendanceBulk = withErrorLogging("markAttendanceBulk", async (
   dateStr: string,
-  status: "PRESENT" | "ABSENT" | "LEAVE",
+  marks: { employeeId: string; status: "PRESENT" | "ABSENT" | "HALF_DAY" | "LEAVE" }[],
 ): Promise<ActionResult> => {
   await requireRole("MANAGER");
+  if (marks.length === 0) return ok("Nothing to update.");
   const date = new Date(dateStr + "T00:00:00");
-  await prisma.attendanceRecord.upsert({
-    where: { employeeId_date: { employeeId, date } },
-    update: { status },
-    create: { employeeId, date, status },
-  });
+  await prisma.$transaction(
+    marks.map(({ employeeId, status }) =>
+      prisma.attendanceRecord.upsert({
+        where: { employeeId_date: { employeeId, date } },
+        update: { status },
+        create: { employeeId, date, status },
+      }),
+    ),
+  );
   revalidatePath("/admin/employees");
-  return ok("Attendance saved.");
+  return ok(marks.length === 1 ? "Attendance saved." : `Attendance saved for ${marks.length} staff.`);
 });

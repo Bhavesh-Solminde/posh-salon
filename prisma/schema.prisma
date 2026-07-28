@@ -307,6 +307,7 @@ enum PaymentMethod {
   CASH
   UPI
   CARD
+  MIXED
 }
 
 model Invoice {
@@ -318,6 +319,7 @@ model Invoice {
   productSubtotal Decimal       @default(0) @db.Decimal(12, 2)
   discountTotal   Decimal       @default(0) @db.Decimal(12, 2)
   taxTotal        Decimal       @default(0) @db.Decimal(12, 2)
+  gstApplied      Boolean       @default(true)
   grandTotal      Decimal       @default(0) @db.Decimal(12, 2)
   walletRedeemed  Decimal       @default(0) @db.Decimal(12, 2) // ≤ serviceSubtotal
   amountPaid      Decimal       @default(0) @db.Decimal(12, 2)
@@ -336,18 +338,21 @@ model Invoice {
 }
 
 model InvoiceItem {
-  id        String          @id @default(cuid())
-  invoiceId String
-  invoice   Invoice         @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-  type      InvoiceItemType
-  refId     String? // serviceId / productId / planId
-  name      String // snapshot at time of sale
-  quantity  Int             @default(1)
-  unitPrice Decimal         @db.Decimal(12, 2)
-  discount  Decimal         @default(0) @db.Decimal(12, 2)
-  lineTotal Decimal         @db.Decimal(12, 2)
+  id         String          @id @default(cuid())
+  invoiceId  String
+  invoice    Invoice         @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  type       InvoiceItemType
+  refId      String? // serviceId / productId / planId
+  name       String // snapshot at time of sale
+  quantity   Int             @default(1)
+  unitPrice  Decimal         @db.Decimal(12, 2)
+  discount   Decimal         @default(0) @db.Decimal(12, 2)
+  lineTotal  Decimal         @db.Decimal(12, 2)
+  employeeId String? // who performed the service / sold the product
+  employee   Employee?       @relation(fields: [employeeId], references: [id])
 
   @@index([invoiceId])
+  @@index([employeeId])
 }
 
 model Payment {
@@ -378,19 +383,20 @@ enum FinanceCategory {
 }
 
 model FinancialTransaction {
-  id           String          @id @default(cuid())
-  type         FinanceType
-  category     FinanceCategory
-  amount       Decimal         @db.Decimal(12, 2)
-  description  String?
-  invoiceId    String?
-  membershipId String?
-  productId    String?
-  occurredAt   DateTime        @default(now())
-  createdById  String?
-  branchId     String?
-  createdAt    DateTime        @default(now())
-  deletedAt    DateTime?
+  id            String          @id @default(cuid())
+  type          FinanceType
+  category      FinanceCategory
+  amount        Decimal         @db.Decimal(12, 2)
+  description   String?
+  invoiceId     String?
+  membershipId  String?
+  productId     String?
+  paymentMethod PaymentMethod?
+  occurredAt    DateTime        @default(now())
+  createdById   String?
+  branchId      String?
+  createdAt     DateTime        @default(now())
+  deletedAt     DateTime?
 
   @@index([occurredAt])
   @@index([type])
@@ -402,6 +408,7 @@ model FinancialTransaction {
 enum AttendanceStatus {
   PRESENT
   ABSENT
+  HALF_DAY
   LEAVE
 }
 
@@ -418,6 +425,7 @@ model Employee {
   deletedAt    DateTime?
   attendance   AttendanceRecord[]
   appointments Appointment[]
+  invoiceItems InvoiceItem[]
 }
 
 model AttendanceRecord {

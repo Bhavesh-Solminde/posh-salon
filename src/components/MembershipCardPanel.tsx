@@ -4,6 +4,7 @@ import { Panel } from "@/components/admin/ui/Panel";
 import { Seal } from "@/components/ui/Seal";
 import { formatINR } from "@/lib/money";
 import { formatDate } from "@/lib/format";
+import { PRODUCTION_ORIGIN } from "@/lib/url";
 
 export type MembershipWithCard = Prisma.MembershipGetPayload<{
   include: { customer: true; plan: true };
@@ -14,7 +15,7 @@ export type MembershipWithCard = Prisma.MembershipGetPayload<{
  * membership view and the public, unauthenticated share link sent over WhatsApp.
  */
 export async function MembershipCardPanel({ membership }: { membership: MembershipWithCard }) {
-  const qrSvg = await QRCode.toString(membership.qrToken, {
+  const qrSvg = await QRCode.toString(`${PRODUCTION_ORIGIN}/membership/${membership.qrToken}`, {
     type: "svg",
     margin: 0,
     color: { dark: "#1C160E", light: "#0000" },

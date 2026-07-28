@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useState, useTransition } from "react";
 import { Plus, Pencil, UserCog } from "lucide-react";
-import { saveEmployee, deleteEmployee, markAttendance } from "../actions";
+import { saveEmployee, deleteEmployee, markAttendanceBulk } from "../actions";
 import { AdminButton } from "@/components/admin/AdminButton";
 import { DataTable, type Column } from "@/components/admin/ui/DataTable";
 import { Modal } from "@/components/admin/ui/Modal";
@@ -22,7 +22,7 @@ export type EmployeeRow = {
   phone: string | null;
   joinedAt: string | null;
   isActive: boolean;
-  attendance: "PRESENT" | "ABSENT" | "LEAVE" | null;
+  attendance: "PRESENT" | "ABSENT" | "HALF_DAY" | "LEAVE" | null;
 };
 
 type Attendance = NonNullable<EmployeeRow["attendance"]>;
@@ -32,6 +32,7 @@ type Attendance = NonNullable<EmployeeRow["attendance"]>;
 const ATTENDANCE: { value: Attendance; letter: string; label: string; className: string }[] = [
   { value: "PRESENT", letter: "P", label: "Present", className: "border-success bg-success-soft text-success" },
   { value: "ABSENT", letter: "A", label: "Absent", className: "border-danger bg-danger-soft text-danger" },
+  { value: "HALF_DAY", letter: "H", label: "Half Day", className: "border-info bg-info-soft text-info" },
   { value: "LEAVE", letter: "L", label: "Leave", className: "border-warning bg-warning-soft text-warning" },
 ];
 
@@ -48,16 +49,36 @@ export function EmployeesManager({
   const [editing, setEditing] = useState<EmployeeRow | null>(null);
   const [open, setOpen] = useState(false);
   const [pending, start] = useTransition();
+  const [pendingAttendance, setPendingAttendance] = useState<Record<string, Attendance>>({});
 
-  function mark(employee: EmployeeRow, status: Attendance, label: string) {
+  useEffect(() => {
+    setPendingAttendance({});
+  }, [date]);
+
+  const dirtyCount = Object.keys(pendingAttendance).length;
+
+  function attendanceFor(employee: EmployeeRow): Attendance | null {
+    return pendingAttendance[employee.id] ?? employee.attendance;
+  }
+
+  function stage(employee: EmployeeRow, status: Attendance) {
+    setPendingAttendance((prev) => {
+      const next = { ...prev };
+      if (employee.attendance === status) delete next[employee.id];
+      else next[employee.id] = status;
+      return next;
+    });
+  }
+
+  function updateAttendance() {
+    const marks = Object.entries(pendingAttendance).map(([employeeId, status]) => ({ employeeId, status }));
     start(async () => {
-      const r = await markAttendance(employee.id, date, status);
+      const r = await markAttendanceBulk(date, marks);
       toast(
-        r.ok
-          ? `${employee.name} marked ${label.toLowerCase()} for ${dateLabel}.`
-          : (r.error ?? "Couldn't save that attendance mark."),
+        r.ok ? (r.message ?? "Attendance saved.") : (r.error ?? "Couldn't save attendance."),
         r.ok ? "success" : "danger",
       );
+      if (r.ok) setPendingAttendance({});
     });
   }
 
@@ -73,7 +94,25 @@ export function EmployeesManager({
     </AdminButton>
   );
 
-  const present = employees.filter((e) => e.attendance === "PRESENT").length;
+  const present = employees.filter((e) => attendanceFor(e) === "PRESENT").length;
+
+  const headerActions = (
+    <div className="flex items-center gap-2">
+      {dirtyCount > 0 && (
+        <span className="text-ui-sm text-ink-muted">
+          {dirtyCount} unsaved {dirtyCount === 1 ? "change" : "changes"}
+        </span>
+      )}
+      <AdminButton
+        variant="primary"
+        disabled={dirtyCount === 0 || pending}
+        onClick={updateAttendance}
+      >
+        Update Attendance
+      </AdminButton>
+      {newButton}
+    </div>
+  );
 
   const columns: Column<EmployeeRow>[] = [
     {
@@ -114,18 +153,19 @@ export function EmployeesManager({
       cell: (e) => (
         <div className="flex gap-1" role="group" aria-label={`Attendance for ${e.name} on ${dateLabel}`}>
           {ATTENDANCE.map((a) => {
-            const active = e.attendance === a.value;
+            const active = attendanceFor(e) === a.value;
+            const staged = pendingAttendance[e.id] !== undefined;
             return (
               <button
                 key={a.value}
                 type="button"
                 disabled={pending}
-                onClick={() => mark(e, a.value, a.label)}
+                onClick={() => stage(e, a.value)}
                 aria-pressed={active}
                 title={a.label}
                 className={`border px-2 py-1 text-meta uppercase transition-colors duration-150 disabled:opacity-50 ${
                   active ? a.className : "border-warm-line text-ink-muted hover:bg-warm-panel"
-                }`}
+                } ${staged ? "ring-2 ring-offset-1 ring-gold" : ""}`}
               >
                 <span aria-hidden>{a.letter}</span>
                 <span className="sr-only">{a.label}</span>
@@ -175,7 +215,7 @@ export function EmployeesManager({
             ? `Attendance for ${dateLabel} · ${present} of ${employees.length} marked present`
             : undefined
         }
-        actions={newButton}
+        actions={headerActions}
       />
       <DataTable
         caption={`Employees and attendance for ${dateLabel}`}

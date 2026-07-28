@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
+import type { PaymentMethod } from "@prisma/client";
 import { prisma, TX_OPTS } from "@/lib/db";
 import { requireStaff } from "@/lib/session";
 import { withErrorLogging } from "@/lib/actions";
@@ -19,6 +20,7 @@ const lineSchema = z.object({
   quantity: z.coerce.number().int().min(1),
   unitPrice: z.coerce.number().min(0),
   discount: z.coerce.number().min(0).default(0),
+  employeeId: z.string().nullable().optional(),
 });
 
 const payloadSchema = z.object({
@@ -28,6 +30,7 @@ const payloadSchema = z.object({
   payments: z
     .array(z.object({ method: z.enum(["CASH", "UPI", "CARD"]), amount: z.coerce.number().min(0) }))
     .default([]),
+  gstApplied: z.boolean().default(true),
 });
 
 export type CreateInvoiceResult =
@@ -40,11 +43,11 @@ export const createInvoice = withErrorLogging("createInvoice", async (input: unk
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid bill." };
   }
-  const { customerId, lines, walletRedeem, payments } = parsed.data;
+  const { customerId, lines, walletRedeem, payments, gstApplied } = parsed.data;
 
   const settings = await prisma.settings.findUniqueOrThrow({ where: { id: "singleton" } });
   const totals = computeInvoiceTotals(lines, {
-    gstRatePct: Number(settings.gstRatePct),
+    gstRatePct: gstApplied ? Number(settings.gstRatePct) : 0,
     pricesIncludeGst: settings.pricesIncludeGst,
   });
 
@@ -98,6 +101,7 @@ export const createInvoice = withErrorLogging("createInvoice", async (input: unk
         productSubtotal: totals.productSubtotal,
         discountTotal: totals.discountTotal,
         taxTotal: totals.taxTotal,
+        gstApplied,
         grandTotal: totals.grandTotal,
         walletRedeemed,
         amountPaid,
@@ -113,6 +117,7 @@ export const createInvoice = withErrorLogging("createInvoice", async (input: unk
             unitPrice: l.unitPrice,
             discount: l.discount ?? 0,
             lineTotal: round2(l.unitPrice * l.quantity - (l.discount ?? 0)),
+            employeeId: l.employeeId || null,
           })),
         },
         payments: {
@@ -161,13 +166,19 @@ export const createInvoice = withErrorLogging("createInvoice", async (input: unk
       });
     }
 
+    // A split across methods can't be filtered as any single one — label it
+    // "Mixed" rather than picking an arbitrary method to attribute the whole sale to.
+    const paidMethods = new Set(payments.filter((p) => p.amount > 0).map((p) => p.method));
+    const ledgerMethod: PaymentMethod | null =
+      paidMethods.size === 0 ? null : paidMethods.size === 1 ? [...paidMethods][0] : "MIXED";
+
     // Income ledger entries (excludes wallet-funded service portion).
     const ledger = [];
     if (serviceIncome > 0) {
-      ledger.push({ type: "INCOME" as const, category: "SERVICE_SALE" as const, amount: serviceIncome, description: `Services — ${number}`, invoiceId: created.id });
+      ledger.push({ type: "INCOME" as const, category: "SERVICE_SALE" as const, amount: serviceIncome, description: `Services — ${number}`, invoiceId: created.id, paymentMethod: ledgerMethod });
     }
     if (productIncome > 0) {
-      ledger.push({ type: "INCOME" as const, category: "PRODUCT_SALE" as const, amount: productIncome, description: `Products — ${number}`, invoiceId: created.id });
+      ledger.push({ type: "INCOME" as const, category: "PRODUCT_SALE" as const, amount: productIncome, description: `Products — ${number}`, invoiceId: created.id, paymentMethod: ledgerMethod });
     }
     if (ledger.length > 0) await tx.financialTransaction.createMany({ data: ledger });
 

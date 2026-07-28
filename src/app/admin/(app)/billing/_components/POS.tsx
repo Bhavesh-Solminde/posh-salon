@@ -7,6 +7,7 @@ import { createInvoice } from "../actions";
 import { AdminButton } from "@/components/admin/AdminButton";
 import { StatusChip } from "@/components/admin/ui/StatusChip";
 import { EmptyState } from "@/components/admin/ui/EmptyState";
+import { SearchableSelect } from "@/components/admin/ui/SearchableSelect";
 import { useToast } from "@/components/admin/ui/Toast";
 import {
   computeInvoiceTotals,
@@ -19,6 +20,7 @@ import {
 type ServiceOpt = { id: string; name: string; price: number };
 type ProductOpt = { id: string; name: string; salePrice: number; stock: number };
 type CustomerOpt = { id: string; name: string; phone: string; walletBalance: number | null };
+type EmployeeOpt = { id: string; name: string };
 
 type CartLine = {
   key: string;
@@ -29,6 +31,7 @@ type CartLine = {
   quantity: number;
   discount: number;
   stock?: number;
+  employeeId: string | null;
 };
 
 type PaymentRow = { method: "CASH" | "UPI" | "CARD"; amount: number };
@@ -44,12 +47,14 @@ export function POS({
   services,
   products,
   customers,
+  employees,
   gstRatePct,
   pricesIncludeGst,
 }: {
   services: ServiceOpt[];
   products: ProductOpt[];
   customers: CustomerOpt[];
+  employees: EmployeeOpt[];
   gstRatePct: number;
   pricesIncludeGst: boolean;
 }) {
@@ -58,6 +63,7 @@ export function POS({
   const [lines, setLines] = useState<CartLine[]>([]);
   const [walletRedeem, setWalletRedeem] = useState(0);
   const [payments, setPayments] = useState<PaymentRow[]>([{ method: "CASH", amount: 0 }]);
+  const [gstOn, setGstOn] = useState(true);
   const [pending, startTransition] = useTransition();
   const [done, setDone] = useState<{ number: string; invoiceId: string } | null>(null);
 
@@ -73,9 +79,9 @@ export function POS({
           quantity: l.quantity,
           discount: l.discount,
         })),
-        { gstRatePct, pricesIncludeGst },
+        { gstRatePct: gstOn ? gstRatePct : 0, pricesIncludeGst },
       ),
-    [lines, gstRatePct, pricesIncludeGst],
+    [lines, gstRatePct, gstOn, pricesIncludeGst],
   );
 
   const maxWallet = Math.min(totals.serviceSubtotal, walletBalance);
@@ -97,7 +103,7 @@ export function POS({
     if (!s) return;
     setLines((ls) => [
       ...ls,
-      { key: nextKey(), type: "SERVICE", refId: s.id, name: s.name, unitPrice: s.price, quantity: 1, discount: 0 },
+      { key: nextKey(), type: "SERVICE", refId: s.id, name: s.name, unitPrice: s.price, quantity: 1, discount: 0, employeeId: null },
     ]);
   }
   function addProduct(id: string) {
@@ -105,7 +111,7 @@ export function POS({
     if (!p) return;
     setLines((ls) => [
       ...ls,
-      { key: nextKey(), type: "PRODUCT", refId: p.id, name: p.name, unitPrice: p.salePrice, quantity: 1, discount: 0, stock: p.stock },
+      { key: nextKey(), type: "PRODUCT", refId: p.id, name: p.name, unitPrice: p.salePrice, quantity: 1, discount: 0, stock: p.stock, employeeId: null },
     ]);
   }
   function updateLine(key: string, patch: Partial<CartLine>) {
@@ -130,9 +136,11 @@ export function POS({
           quantity: l.quantity,
           unitPrice: l.unitPrice,
           discount: l.discount,
+          employeeId: l.employeeId,
         })),
         walletRedeem: effWallet,
         payments: payments.filter((p) => Number(p.amount) > 0),
+        gstApplied: gstOn,
       });
       if (res.ok) {
         toast(`Invoice ${res.number} created.`);
@@ -148,6 +156,7 @@ export function POS({
     setLines([]);
     setWalletRedeem(0);
     setPayments([{ method: "CASH", amount: 0 }]);
+    setGstOn(true);
     setDone(null);
   }
 
@@ -186,23 +195,22 @@ export function POS({
             <label htmlFor="pos-customer" className="text-meta uppercase text-ink-muted">
               Customer
             </label>
-            <select
-              id="pos-customer"
-              value={customerId}
-              onChange={(e) => {
-                setCustomerId(e.target.value);
-                setWalletRedeem(0);
-              }}
-              className={`${controlSm} mt-1.5 w-full`}
-            >
-              <option value="">Walk-in (no record)</option>
-              {customers.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name} · {c.phone}
-                  {c.walletBalance ? ` · wallet ${formatINR(c.walletBalance)}` : ""}
-                </option>
-              ))}
-            </select>
+            <div className="mt-1.5">
+              <SearchableSelect
+                id="pos-customer"
+                value={customerId}
+                onChange={(id) => {
+                  setCustomerId(id);
+                  setWalletRedeem(0);
+                }}
+                placeholder="Walk-in (no record)"
+                className={`${controlSm} w-full`}
+                options={customers.map((c) => ({
+                  id: c.id,
+                  label: `${c.name} · ${c.phone}${c.walletBalance ? ` · wallet ${formatINR(c.walletBalance)}` : ""}`,
+                }))}
+              />
+            </div>
           </div>
           {customer && walletBalance > 0 ? (
             <div className="pb-1.5">
@@ -216,44 +224,37 @@ export function POS({
             <label htmlFor="pos-service" className="text-meta uppercase text-ink-muted">
               Add service
             </label>
-            <select
-              id="pos-service"
-              className={`${controlSm} mt-1.5 w-full`}
-              value=""
-              onChange={(e) => {
-                addService(e.target.value);
-                e.currentTarget.value = "";
-              }}
-            >
-              <option value="">Choose a service…</option>
-              {services.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name} — {formatINR(s.price)}
-                </option>
-              ))}
-            </select>
+            <div className="mt-1.5">
+              <SearchableSelect
+                id="pos-service"
+                value=""
+                onChange={addService}
+                clearOnSelect
+                placeholder="Choose a service…"
+                className={`${controlSm} w-full`}
+                options={services.map((s) => ({ id: s.id, label: `${s.name} — ${formatINR(s.price)}` }))}
+              />
+            </div>
           </div>
           <div className="min-w-[13rem] flex-1">
             <label htmlFor="pos-product" className="text-meta uppercase text-ink-muted">
               Add product
             </label>
-            <select
-              id="pos-product"
-              className={`${controlSm} mt-1.5 w-full`}
-              value=""
-              onChange={(e) => {
-                addProduct(e.target.value);
-                e.currentTarget.value = "";
-              }}
-            >
-              <option value="">Choose a product…</option>
-              {products.map((p) => (
-                <option key={p.id} value={p.id} disabled={p.stock <= 0}>
-                  {p.name} — {formatINR(p.salePrice)}
-                  {p.stock > 0 ? ` (${p.stock} in stock)` : " (out of stock)"}
-                </option>
-              ))}
-            </select>
+            <div className="mt-1.5">
+              <SearchableSelect
+                id="pos-product"
+                value=""
+                onChange={addProduct}
+                clearOnSelect
+                placeholder="Choose a product…"
+                className={`${controlSm} w-full`}
+                options={products.map((p) => ({
+                  id: p.id,
+                  label: `${p.name} — ${formatINR(p.salePrice)}${p.stock > 0 ? ` (${p.stock} in stock)` : " (out of stock)"}`,
+                  disabled: p.stock <= 0,
+                }))}
+              />
+            </div>
           </div>
         </div>
 
@@ -273,6 +274,9 @@ export function POS({
                   <tr className="border-b border-warm-line">
                     <th scope="col" className="px-3 py-2 text-left text-meta uppercase text-ink-muted">
                       Item
+                    </th>
+                    <th scope="col" className="px-3 py-2 text-left text-meta uppercase text-ink-muted">
+                      Employee
                     </th>
                     <th scope="col" className="px-3 py-2 text-right text-meta uppercase text-ink-muted">
                       Price
@@ -307,6 +311,16 @@ export function POS({
                               Only {l.stock} in stock
                             </span>
                           )}
+                        </td>
+                        <td className="px-3 py-2">
+                          <SearchableSelect
+                            value={l.employeeId ?? ""}
+                            onChange={(id) => updateLine(l.key, { employeeId: id || null })}
+                            placeholder="Unassigned"
+                            className={`${controlSm} w-40`}
+                            aria-label={`Employee for ${l.name}`}
+                            options={employees.map((e) => ({ id: e.id, label: e.name }))}
+                          />
                         </td>
                         <td className="px-3 py-2 text-right">
                           <input
@@ -391,7 +405,23 @@ export function POS({
         {totals.discountTotal > 0 && (
           <Row label="Discounts" value={`− ${formatINR(totals.discountTotal)}`} />
         )}
-        <Row label={`GST (${gstRatePct}%)`} value={formatINR(totals.taxTotal)} muted />
+        <div className="flex items-center justify-between gap-4">
+          <span className="text-ui-sm text-ink-muted">
+            GST {gstOn ? `(${gstRatePct}%)` : "(off)"}
+          </span>
+          <div className="flex items-center gap-2">
+            <span className="tabular-nums text-ui-sm text-ink-muted">
+              {formatINR(totals.taxTotal)}
+            </span>
+            <button
+              type="button"
+              onClick={() => setGstOn((v) => !v)}
+              className="text-ui-sm text-gold-shadow transition-colors duration-150 hover:text-ink hover:underline"
+            >
+              {gstOn ? "Turn off" : "Turn on"}
+            </button>
+          </div>
+        </div>
         <div className="border-t border-warm-line pt-3">
           <Row label="Grand Total" value={formatINR(totals.grandTotal)} strong />
         </div>

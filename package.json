@@ -9,6 +9,7 @@
     "lint": "eslint",
     "db:migrate": "prisma migrate dev",
     "db:seed": "prisma db seed",
+    "db:seed:dummy": "tsx prisma/seed-dummy.ts",
     "db:studio": "prisma studio",
     "e2e:buttons": "node e2e/button-audit.mjs",
     "e2e:flows": "node e2e/flows.mjs",

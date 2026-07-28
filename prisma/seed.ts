@@ -55,7 +55,7 @@ async function main() {
   });
 
   // ── Staff (idempotent) ──
-  await ensureStaff("admin@posh.salon", "Aarav Shah", "posh1234", "ADMIN");
+  await ensureStaff("admin@posh.salon", "Vatsala", "posh1234", "ADMIN");
   await ensureStaff("manager@posh.salon", "Nisha Rao", "posh1234", "MANAGER");
   await ensureStaff("cashier@posh.salon", "Priya Menon", "posh1234", "CASHIER");
 

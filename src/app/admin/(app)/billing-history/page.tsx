@@ -28,6 +28,10 @@ const CAT_LABEL: Record<string, string> = {
   SUPPLIER_PURCHASE: "Supplier", MISC_EXPENSE: "Misc",
 };
 
+const METHOD_LABEL: Record<string, string> = {
+  CASH: "Cash", UPI: "UPI", CARD: "Card", MIXED: "Mixed",
+};
+
 export default async function BillingHistoryPage({
   searchParams,
 }: {
@@ -35,7 +39,7 @@ export default async function BillingHistoryPage({
 }) {
   await requireStaff();
   const sp = await searchParams;
-  const f = { type: sp.type, category: sp.category, from: sp.from, to: sp.to, q: sp.q };
+  const f = { type: sp.type, category: sp.category, from: sp.from, to: sp.to, q: sp.q, method: sp.method };
   const where = buildWhere(f);
 
   const [rows, income, expense] = await Promise.all([
@@ -96,6 +100,17 @@ export default async function BillingHistoryPage({
       key: "desc",
       header: "Description",
       cell: (r) => r.description ?? <span className="text-ink-muted">—</span>,
+    },
+    {
+      key: "method",
+      header: "Method",
+      hideOnMobile: true,
+      cell: (r) =>
+        r.paymentMethod ? (
+          <StatusChip tone="neutral">{METHOD_LABEL[r.paymentMethod] ?? r.paymentMethod}</StatusChip>
+        ) : (
+          <span className="text-ink-muted">—</span>
+        ),
     },
     {
       key: "amount",
@@ -190,6 +205,20 @@ export default async function BillingHistoryPage({
                 <option value="">All</option>
                 <option value="INCOME">Income</option>
                 <option value="EXPENSE">Expense</option>
+              </select>
+            </FilterField>
+            <FilterField label="Method" htmlFor="ledger-method">
+              <select
+                id="ledger-method"
+                name="method"
+                defaultValue={f.method ?? ""}
+                className={filterControlClass}
+              >
+                <option value="">All</option>
+                <option value="CASH">Cash</option>
+                <option value="UPI">UPI</option>
+                <option value="CARD">Card</option>
+                <option value="MIXED">Mixed</option>
               </select>
             </FilterField>
             <FilterField label="From" htmlFor="ledger-from">
