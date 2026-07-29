@@ -84,7 +84,7 @@ export function SettingsForm({ settings }: { settings: SettingsData }) {
             <Field
               label="Invoice Prefix"
               htmlFor="invoicePrefix"
-              hint="e.g. SS/26-27/00001"
+              hint="e.g. POSH/26-27/00001"
               error={fe.invoicePrefix}
             >
               <Input

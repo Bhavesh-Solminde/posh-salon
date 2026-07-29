@@ -1,28 +1,16 @@
 "use client";
 
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "@/lib/auth-client";
 import { Seal } from "@/components/ui/Seal";
-import { BRAND_NAME } from "@/lib/brand";
 import { AdminButton } from "@/components/admin/AdminButton";
 import { Field, Input } from "@/components/admin/ui/Field";
-
-// Public demo, no real client behind it — safe to publish these so anyone
-// sent the link can sign in and look around without asking for credentials.
-const DEMO_LOGINS = [
-  { role: "Admin", email: "admin@solminde.studio" },
-  { role: "Manager", email: "manager@solminde.studio" },
-  { role: "Cashier", email: "cashier@solminde.studio" },
-];
-const DEMO_PASSWORD = "demo1234";
 
 export default function LoginPage() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const emailRef = useRef<HTMLInputElement>(null);
-  const passwordRef = useRef<HTMLInputElement>(null);
   // Sign-in only works once React is listening. Until then the button ships
   // disabled, so an early click can't fall through to a native form submit —
   // which would put the password in the URL.
@@ -62,18 +50,12 @@ export default function LoginPage() {
     router.refresh();
   }
 
-  function fillDemo(email: string) {
-    if (emailRef.current) emailRef.current.value = email;
-    if (passwordRef.current) passwordRef.current.value = DEMO_PASSWORD;
-    setError(null);
-  }
-
   return (
     <main className="flex min-h-svh items-center justify-center bg-warm-white px-6 py-16">
       <div className="w-full max-w-sm">
         <div className="flex flex-col items-center text-center">
           <Seal size="lg" />
-          <h1 className="mt-6 font-display text-ui-title text-ink">{BRAND_NAME}</h1>
+          <h1 className="mt-6 font-display text-ui-title text-ink">Posh Salon</h1>
           <p className="mt-1 text-meta uppercase text-ink-muted">Staff Sign In</p>
         </div>
 
@@ -85,7 +67,6 @@ export default function LoginPage() {
         >
           <Field label="Email" htmlFor="email">
             <Input
-              ref={emailRef}
               id="email"
               name="email"
               type="email"
@@ -96,7 +77,6 @@ export default function LoginPage() {
           </Field>
           <Field label="Password" htmlFor="password">
             <Input
-              ref={passwordRef}
               id="password"
               name="password"
               type="password"
@@ -122,30 +102,9 @@ export default function LoginPage() {
           </AdminButton>
         </form>
 
-        <div className="mt-6 border border-gold/40 bg-cream p-4">
-          <p className="text-center text-meta uppercase text-ink-muted">
-            Demo access — no invite needed
-          </p>
-          <div className="mt-3 space-y-2">
-            {DEMO_LOGINS.map((login) => (
-              <button
-                key={login.email}
-                type="button"
-                onClick={() => fillDemo(login.email)}
-                className="flex w-full items-center justify-between gap-3 border border-warm-line bg-warm-white px-3 py-2 text-left transition-colors duration-150 hover:border-gold-shadow focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
-              >
-                <span className="text-ui-sm text-ink">
-                  <span className="text-ink-muted">{login.role}</span>{" "}
-                  <span className="font-medium">{login.email}</span>
-                </span>
-                <span className="text-meta uppercase text-gold-shadow">Fill</span>
-              </button>
-            ))}
-          </div>
-          <p className="mt-3 text-center text-ui-sm text-ink-muted">
-            Password for all three: <span className="font-medium text-ink">{DEMO_PASSWORD}</span>
-          </p>
-        </div>
+        <p className="mt-6 text-center text-ui-sm text-ink-muted">
+          Staff accounts are created by an administrator.
+        </p>
       </div>
     </main>
   );

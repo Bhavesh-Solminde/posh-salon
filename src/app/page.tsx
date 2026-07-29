@@ -12,12 +12,13 @@ import { ContactForm } from "@/components/site/ContactForm";
 import { Footer } from "@/components/site/Footer";
 import { WhatsAppFab } from "@/components/site/WhatsAppFab";
 import { getSiteContent, isPlaceholder } from "@/lib/site-content";
-import { BRAND_SEAL, SITE_URL } from "@/lib/brand";
 
 // The homepage is prerendered and refreshed whenever staff save Settings,
 // Services or Website content (those actions revalidate "/"). The hourly window
 // is a safety net in case an edit path is ever added without one.
 export const revalidate = 3600;
+
+const SITE_URL = "https://www.poshsalon.co.in";
 
 // Only facts the salon has actually confirmed go in — matching site-content.ts's
 // rule that placeholder business details never surface as if they were real.
@@ -28,7 +29,7 @@ function buildLocalBusinessJsonLd(salon: Awaited<ReturnType<typeof getSiteConten
     "@id": SITE_URL,
     name: salon.name,
     url: SITE_URL,
-    image: `${SITE_URL}${BRAND_SEAL}`,
+    image: `${SITE_URL}/posh-salon-seal.png`,
   };
   if (salon.hasPhone) jsonLd.telephone = salon.phone;
   if (salon.hasAddress) {

@@ -1,5 +1,4 @@
 import Image from "next/image";
-import { BRAND_NAME, BRAND_SEAL } from "@/lib/brand";
 
 const SIZES = {
   sm: 44,
@@ -27,8 +26,8 @@ export function Seal({
     >
       <span className="absolute inset-0 rounded-full ring-1 ring-gold/40" />
       <Image
-        src={BRAND_SEAL}
-        alt={BRAND_NAME}
+        src="/posh-salon-seal.png"
+        alt="Posh Salon"
         width={px}
         height={px}
         priority

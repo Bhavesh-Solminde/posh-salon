@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { requireStaff } from "@/lib/session";
-import { BRAND_NAME } from "@/lib/brand";
 
 export const metadata: Metadata = {
-  title: `Admin · ${BRAND_NAME}`,
+  title: "Admin · Posh Salon",
   // Staff-only tool — keep it out of search indexes.
   robots: { index: false, follow: false },
 };

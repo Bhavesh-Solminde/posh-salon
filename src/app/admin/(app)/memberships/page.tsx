@@ -12,7 +12,6 @@ import { MembershipCreate } from "./_components/MembershipCreate";
 import { formatINR } from "@/lib/money";
 import { formatDate } from "@/lib/format";
 import { getOrigin } from "@/lib/url";
-import { BRAND_NAME } from "@/lib/brand";
 
 type Row = Awaited<ReturnType<typeof load>>[number];
 async function load() {
@@ -93,7 +92,7 @@ export default async function MembershipsPage() {
         <div className="flex justify-end">
           <WhatsAppSendButton
             phone={m.customer.phone}
-            message={`Hi ${m.customer.name}, here's your ${m.tier} membership card (${m.membershipNo}) from ${BRAND_NAME}. View it here: ${origin}/membership/${m.qrToken}`}
+            message={`Hi ${m.customer.name}, here's your ${m.tier} membership card (${m.membershipNo}) from Posh Salon. View it here: ${origin}/membership/${m.qrToken}`}
             label={`Send membership ${m.membershipNo} via WhatsApp`}
             iconOnly
             variant="ghost"

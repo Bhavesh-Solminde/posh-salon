@@ -1,5 +1,5 @@
 ---
-name: Solminde Studio
+name: Posh Salon
 description: A luxury salon rendered as maison stationery — warm cream card stock, gold foil marks, crisp ink type. One design system across a Persuade landing and an Operate admin.
 colors:
   warm-white: "#FAF6ED"
@@ -91,13 +91,13 @@ components:
     padding: "14px 28px"
 ---
 
-# Design System: Solminde Studio (Light / Cream Stationery Version)
+# Design System: Posh Salon (Light / Cream Stationery Version)
 
 ## Overview
 
 **Creative North Star: "The Maison Stationery"**
 
-Solminde Studio's light homepage reads as the opened interior of a luxury maison invitation — warm cream card stock, gold foil rules and seals, and crisp ink typography. The page is built on the logic of folded stationery paper: a soft warm-white ground (`#FAF6ED`), textured warm panels (`#F3EBDD`), and rich gold foil accents.
+Posh Salon's light homepage reads as the opened interior of a luxury maison invitation — warm cream card stock, gold foil rules and seals, and crisp ink typography. The page is built on the logic of folded stationery paper: a soft warm-white ground (`#FAF6ED`), textured warm panels (`#F3EBDD`), and rich gold foil accents.
 
 Key Characteristics:
 - Warm-white card-stock ground with gold foil accents and warm paper inserts.
@@ -251,7 +251,7 @@ login card), and never on a table, list row, or data container.
 The salon's real logo, rendered at four fixed sizes (sm/md/lg/xl), always ringed in `gold/40` and carrying `shadow-seal`. In the hero only, it plays a single `stamp` entrance animation (scale down from 1.22 with a slight rotate, cubic-bezier ease-out, ~1.1s) — the page's one authored motion moment. Elsewhere (landing nav/footer, admin sidebar) it is static.
 
 ### Admin Sidebar (Operate)
-- `warm-panel` rail, 1px `warm-line` right border, no radius, no deckle. Seal + "Solminde Studio" wordmark (Bodoni) at top.
+- `warm-panel` rail, 1px `warm-line` right border, no radius, no deckle. Seal + "Posh Salon" wordmark (Bodoni) at top.
 - **Nav item:** Inter `text-ui`, Lucide thin-line icon + label. Default = ink-muted; hover = ink on a faint `warm-line/40` wash; **active** = ink label + `gold-shadow` icon (the accessible foil register — literal `gold` #C7A24B fails contrast on the panel) + a 2px `gold` left-edge marker, `aria-current="page"`.
 - **Collapse:** labels hide → icon-only rail at `lg`; becomes an off-canvas drawer (scrim + focus trap, Esc to close) below `md`.
 

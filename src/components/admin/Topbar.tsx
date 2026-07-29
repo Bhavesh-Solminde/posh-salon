@@ -40,10 +40,7 @@ export function Topbar({
   }
 
   return (
-    <header
-      style={{ top: "var(--demo-bar-h, 0px)" }}
-      className="sticky z-30 flex h-16 shrink-0 items-center gap-3 border-b border-warm-line bg-warm-white px-4 print:hidden"
-    >
+    <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-3 border-b border-warm-line bg-warm-white px-4 print:hidden">
       <AdminButton
         variant="ghost"
         size="icon"

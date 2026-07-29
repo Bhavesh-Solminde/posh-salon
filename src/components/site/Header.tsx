@@ -68,10 +68,7 @@ export function Header({ salon }: { salon: SiteContent["salon"] }) {
 
   return (
     <header
-      // Sits below the demo notice bar; the variable collapses to 0px once the
-      // bar is dismissed, so the header returns to the top of the viewport.
-      style={{ top: "var(--demo-bar-h, 0px)" }}
-      className={`fixed inset-x-0 z-50 transition-colors duration-500 ${
+      className={`fixed inset-x-0 top-0 z-50 transition-colors duration-500 ${
         solid
           ? "bg-warm-white/95 shadow-[0_1px_0_0_rgba(199,162,75,0.25)] backdrop-saturate-150"
           : "bg-transparent"
@@ -101,10 +98,7 @@ export function Header({ salon }: { salon: SiteContent["salon"] }) {
           ))}
         </nav>
 
-        <div className="hidden items-center gap-3 md:flex">
-          <LinkButton href="/admin/dashboard" variant="outline" className="px-5 py-2.5 text-meta">
-            Admin Dashboard
-          </LinkButton>
+        <div className="hidden md:block">
           <LinkButton href={cta.href} variant="primary" className="px-5 py-2.5 text-meta">
             {cta.label}
           </LinkButton>
@@ -161,16 +155,6 @@ export function Header({ salon }: { salon: SiteContent["salon"] }) {
                 onClick={() => setOpen(false)}
               >
                 {cta.label}
-              </LinkButton>
-            </li>
-            <li>
-              <LinkButton
-                href="/admin/dashboard"
-                variant="outline"
-                className="w-full"
-                onClick={() => setOpen(false)}
-              >
-                Admin Dashboard
               </LinkButton>
             </li>
           </ul>

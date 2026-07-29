@@ -5,7 +5,6 @@ import { Seal } from "@/components/ui/Seal";
 import { formatINR } from "@/lib/money";
 import { formatDate } from "@/lib/format";
 import { PRODUCTION_ORIGIN } from "@/lib/url";
-import { BRAND_NAME } from "@/lib/brand";
 
 export type MembershipWithCard = Prisma.MembershipGetPayload<{
   include: { customer: true; plan: true };
@@ -28,7 +27,7 @@ export async function MembershipCardPanel({ membership }: { membership: Membersh
         <div className="flex items-center gap-3">
           <Seal size="md" />
           <div>
-            <p className="font-display text-ui-lg text-ink">{BRAND_NAME}</p>
+            <p className="font-display text-ui-lg text-ink">Posh Salon</p>
             <p className="text-meta uppercase text-ink-muted">{membership.tier} Membership</p>
           </div>
         </div>

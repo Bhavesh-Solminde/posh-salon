@@ -4,11 +4,6 @@
 
 :root {
   color-scheme: light;
-
-  /* Height reserved for the demo notice bar. Set by DemoNotice (and by the
-     no-flash script in <head> when it has already been dismissed); the fixed
-     site header and the admin chrome offset off it. */
-  --demo-bar-h: 36px;
 }
 
 * {
@@ -18,15 +13,6 @@
 body {
   background: #faf6ed;
   color: #1c160e;
-  /* Reserves the strip the fixed demo bar overlays, so no page begins underneath
-     it. Collapses to 0 once the bar is dismissed. */
-  padding-top: var(--demo-bar-h, 0px);
-}
-
-@media print {
-  body {
-    padding-top: 0;
-  }
 }
 
 ::selection {

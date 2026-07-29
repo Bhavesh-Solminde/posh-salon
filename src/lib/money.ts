@@ -106,7 +106,7 @@ export function financialYear(date: Date): string {
   return `${a}-${b}`;
 }
 
-/** e.g. ("SS", 1, date) → "SS/26-27/00001". */
+/** e.g. ("POSH", 1, date) → "POSH/26-27/00001". */
 export function formatInvoiceNumber(prefix: string, seq: number, date: Date): string {
   return `${prefix}/${financialYear(date)}/${String(seq).padStart(5, "0")}`;
 }

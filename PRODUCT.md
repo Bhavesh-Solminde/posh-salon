@@ -88,18 +88,17 @@ attendance-marking style; business location and hours.
 
 ## Brand Commitments
 
-- **Name:** Solminde Studio. **Logo:** `public/solminde-seal.png` — a terracotta script
-  "S" monogram on a flat cream field, cropped into the site's circular seal treatment.
-  This is a rebrand of the original Posh Salon build (see below) — the client's identity
-  was fully replaced for use as a portfolio demo; the layout, palette direction, and
-  product decisions below carry over unchanged.
+- **Name:** Posh Salon. **Logo:** present at `posh_salon.PNG` — a gold-rimmed circular
+  medallion on black, cream/champagne field, black female + male silhouettes, "POSH SALON"
+  in serif caps. Confirms Black + Gold + Cream; drives the palette in later design work.
 - User-stated binding direction (recorded, not expanded here — the visual world is decided
   in later design work): **Black, Gold, Cream**; luxury / premium / minimal / elegant /
   modern; Dior / Chanel / Apple-level simplicity; **avoid colorful gradients.**
 
 ## Evidence on Hand
 
-- **Available:** the Solminde Studio **seal** at `public/solminde-seal.png`.
+- **Available:** the Posh Salon **logo** at `posh_salon.PNG` (viewed — gold/black/cream
+  circular emblem).
 - **Not yet available — must NOT be fabricated:** professional photography, real customer
   testimonials/reviews, the final service catalog with prices, real business
   address/phone/hours, and GST details. Until the salon supplies these, use clearly-marked

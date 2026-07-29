@@ -3,10 +3,9 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { PrintButton } from "@/components/admin/ui/PrintButton";
 import { InvoiceDocument } from "@/components/InvoiceDocument";
-import { BRAND_NAME } from "@/lib/brand";
 
 export const metadata: Metadata = {
-  title: `Invoice · ${BRAND_NAME}`,
+  title: "Invoice · Posh Salon",
   // Reachable only via a direct link sent to the customer, not for search indexes.
   robots: { index: false, follow: false },
 };

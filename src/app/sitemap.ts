@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
-import { SITE_URL } from "@/lib/brand";
+
+const SITE_URL = "https://www.poshsalon.co.in";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   return [
