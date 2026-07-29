@@ -12,6 +12,7 @@ import { MembershipCardPanel } from "@/components/MembershipCardPanel";
 import { formatINR } from "@/lib/money";
 import { formatDate } from "@/lib/format";
 import { getOrigin } from "@/lib/url";
+import { BRAND_NAME } from "@/lib/brand";
 
 export default async function MembershipCard({
   params,
@@ -29,7 +30,7 @@ export default async function MembershipCard({
   ]);
   if (!m) notFound();
 
-  const whatsappMessage = `Hi ${m.customer.name}, here's your ${m.tier} membership card (${m.membershipNo}) from Posh Salon. View it here: ${origin}/membership/${m.qrToken}`;
+  const whatsappMessage = `Hi ${m.customer.name}, here's your ${m.tier} membership card (${m.membershipNo}) from ${BRAND_NAME}. View it here: ${origin}/membership/${m.qrToken}`;
 
   return (
     <div>

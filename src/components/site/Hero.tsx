@@ -8,7 +8,7 @@ export function Hero({ salon }: { salon: SiteContent["salon"] }) {
     // hero copy keeps its own measure instead of being squeezed inward.
     <section
       id="top"
-      className="relative flex min-h-[100svh] items-center justify-center overflow-hidden bg-warm-white px-6 pb-20 pt-36 sm:px-14"
+      className="relative flex min-h-[calc(100svh-var(--demo-bar-h,0px))] items-center justify-center overflow-hidden bg-warm-white px-6 pb-20 pt-36 sm:px-14"
     >
       {/* Embossed keyline frame, echoing the card's inner border. It starts
           below the header rather than behind it: the header is the letterhead,

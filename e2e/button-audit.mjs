@@ -46,7 +46,7 @@ const record = (route, label, status, detail = "") =>
 
 try {
   await login(page, "ADMIN");
-  console.log(c.dim(`logged in as admin@posh.salon → ${BASE}\n`));
+  console.log(c.dim(`logged in as admin@solminde.studio → ${BASE}\n`));
 
   for (const route of routes) {
     console.log(c.b(route));

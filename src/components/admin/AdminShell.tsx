@@ -20,7 +20,7 @@ export function AdminShell({
 
   return (
     <ToastProvider>
-      <div className="flex min-h-svh bg-warm-white text-ink print:block print:bg-white">
+      <div className="flex min-h-[calc(100svh-var(--demo-bar-h,0px))] bg-warm-white text-ink print:block print:bg-white">
         <a
           href="#admin-content"
           className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[60] focus:border focus:border-gold focus:bg-warm-white focus:px-4 focus:py-2 focus:text-ui-sm"

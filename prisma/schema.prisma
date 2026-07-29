@@ -1,4 +1,4 @@
-// Posh Salon — data model (frozen decisions).
+// Solminde Studio — data model (frozen decisions).
 // Money = Decimal(12,2). Wallet + stock + finances are movement ledgers; cached
 // balances (Membership.balance, Product.stock) are updated atomically alongside
 // their ledger rows and are always reconcilable from those rows.
@@ -445,7 +445,7 @@ model AttendanceRecord {
 
 model Settings {
   id              String   @id @default("singleton")
-  salonName       String   @default("Posh Salon")
+  salonName       String   @default("Solminde Studio")
   tagline         String?
   addressLine     String?
   city            String?
@@ -455,7 +455,7 @@ model Settings {
   gstNumber       String?
   gstRatePct      Decimal  @default(18) @db.Decimal(5, 2)
   pricesIncludeGst Boolean @default(false)
-  invoicePrefix   String   @default("POSH")
+  invoicePrefix   String   @default("SS")
   invoiceNextSeq  Int      @default(1)
   currency        String   @default("INR")
   hoursJson       Json?

@@ -40,7 +40,7 @@ try {
     await page.goto(`${BASE}/admin/dashboard`, { waitUntil: "networkidle" });
     expect(page.url().includes("/admin/login"), `landed on ${page.url()}`);
   });
-  await step("admin@posh.salon signs in", () => login(page, "ADMIN"));
+  await step("admin@solminde.studio signs in", () => login(page, "ADMIN"));
 
   console.log(c.b("\nCustomer"));
   await step("create customer", async () => {

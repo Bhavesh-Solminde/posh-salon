@@ -36,7 +36,7 @@ export const createMembership = withErrorLogging("createMembership", async (
 
   await prisma.$transaction(async (tx) => {
     const count = await tx.membership.count();
-    const membershipNo = `POSH-${String(count + 1).padStart(6, "0")}`;
+    const membershipNo = `SS-${String(count + 1).padStart(6, "0")}`;
     const membership = await tx.membership.create({
       data: {
         membershipNo,

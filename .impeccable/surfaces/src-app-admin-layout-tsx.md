@@ -12,7 +12,7 @@ screen, no backend, UI-only with clearly-mocked identity.
 
 ## Audience, Job, Action, Proof
 Front-desk Cashier (primary) + Manager/Admin. Job: land anywhere, know *where they are* and
-*what else exists*, reach any of 12 sections in one click. Proof it's Posh Salon not a
+*what else exists*, reach any of 12 sections in one click. Proof it's Solminde Studio not a
 generic admin kit = the seal in the rail, gold-foil active nav + primary action, ink-on-warm
 paper, Bodoni for the page title only. No fabricated customers/invoices/revenue.
 

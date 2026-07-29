@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Seal } from "@/components/ui/Seal";
 import { adminNav } from "@/data/adminNav";
 import { canSeeNav, type StaffRole } from "@/lib/roles";
+import { BRAND_NAME } from "@/lib/brand";
 
 function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(href + "/");
@@ -40,9 +41,9 @@ export function SidebarContent({
         <span
           className={`font-display text-ui-lg tracking-wide text-ink ${labelClass}`}
         >
-          Posh Salon
+          {BRAND_NAME}
         </span>
-        {rail && <span className="sr-only lg:hidden">Posh Salon — dashboard</span>}
+        {rail && <span className="sr-only lg:hidden">{BRAND_NAME} — dashboard</span>}
       </Link>
 
       <nav className="flex-1 overflow-y-auto py-4" aria-label="Admin sections">
@@ -108,7 +109,10 @@ export function SidebarContent({
 export function DesktopSidebar({ role }: { role: StaffRole }) {
   return (
     <aside className="hidden shrink-0 border-r border-warm-line bg-warm-panel md:block md:w-16 lg:w-64 print:hidden">
-      <div className="sticky top-0 h-svh">
+      <div
+        style={{ top: "var(--demo-bar-h, 0px)" }}
+        className="sticky h-[calc(100svh-var(--demo-bar-h,0px))]"
+      >
         <SidebarContent mode="rail" role={role} />
       </div>
     </aside>

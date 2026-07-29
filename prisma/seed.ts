@@ -37,14 +37,14 @@ async function main() {
     update: {},
     create: {
       id: "singleton",
-      salonName: "Posh Salon",
+      salonName: "Solminde Studio",
       tagline: "Premier Hair · Skin · Makeup Atelier",
       addressLine: "Address to be confirmed",
       city: "City to be confirmed",
       phone: "+91 00000 00000",
       gstRatePct: 18,
       pricesIncludeGst: false,
-      invoicePrefix: "POSH",
+      invoicePrefix: "SS",
       invoiceNextSeq: 1,
       currency: "INR",
       hoursJson: [
@@ -55,9 +55,9 @@ async function main() {
   });
 
   // ── Staff (idempotent) ──
-  await ensureStaff("admin@posh.salon", "Vatsala", "posh1234", "ADMIN");
-  await ensureStaff("manager@posh.salon", "Nisha Rao", "posh1234", "MANAGER");
-  await ensureStaff("cashier@posh.salon", "Priya Menon", "posh1234", "CASHIER");
+  await ensureStaff("admin@solminde.studio", "Bhavesh", "demo1234", "ADMIN");
+  await ensureStaff("manager@solminde.studio", "Nisha Rao", "demo1234", "MANAGER");
+  await ensureStaff("cashier@solminde.studio", "Priya Menon", "demo1234", "CASHIER");
 
   // ── Website content (guarded independently so it seeds on existing DBs) ──
   if ((await prisma.offer.count()) === 0) {
@@ -140,7 +140,7 @@ async function main() {
   const walletValue = Number(gold.price) + Number(gold.bonusAmount);
   const membership = await prisma.membership.create({
     data: {
-      membershipNo: "POSH-000001",
+      membershipNo: "SS-000001",
       qrToken: randomUUID(),
       customerId: c1.id,
       planId: gold.id,
@@ -157,7 +157,7 @@ async function main() {
     data: { membershipId: membership.id, type: "CREDIT", amount: Number(gold.bonusAmount), reason: "Plan bonus" },
   });
   await prisma.financialTransaction.create({
-    data: { type: "INCOME", category: "MEMBERSHIP_SALE", amount: Number(gold.price), description: "Gold membership — POSH-000001", membershipId: membership.id },
+    data: { type: "INCOME", category: "MEMBERSHIP_SALE", amount: Number(gold.price), description: "Gold membership — SS-000001", membershipId: membership.id },
   });
 
   // ── Employees ──

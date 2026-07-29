@@ -1,13 +1,13 @@
-// Shared helpers for the Posh Salon Playwright suite.
+// Shared helpers for the Solminde Studio Playwright suite.
 // Plain Node scripts (no @playwright/test runner) so they can run against any
 // already-running server with `node e2e/<script>.mjs`.
 
 export const BASE = process.env.E2E_BASE ?? "http://localhost:3000";
 
 export const CREDS = {
-  ADMIN: { email: "admin@posh.salon", password: "posh1234" },
-  MANAGER: { email: "manager@posh.salon", password: "posh1234" },
-  CASHIER: { email: "cashier@posh.salon", password: "posh1234" },
+  ADMIN: { email: "admin@solminde.studio", password: "demo1234" },
+  MANAGER: { email: "manager@solminde.studio", password: "demo1234" },
+  CASHIER: { email: "cashier@solminde.studio", password: "demo1234" },
 };
 
 // Every admin route, in nav order.

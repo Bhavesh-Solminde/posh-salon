@@ -1,5 +1,6 @@
 import { cache } from "react";
 import { prisma } from "./db";
+import { BRAND_NAME, BRAND_TAGLINE } from "./brand";
 
 /**
  * Everything the public homepage renders, read from the same records the salon
@@ -73,8 +74,8 @@ async function loadSiteContent() {
   const fullAddress = [address, city].filter((part) => !isPlaceholder(part)).join(", ");
 
   const salon = {
-    name: settings?.salonName ?? "Posh Salon",
-    tagline: settings?.tagline ?? "Premier Hair · Skin · Makeup Atelier",
+    name: settings?.salonName ?? BRAND_NAME,
+    tagline: settings?.tagline ?? BRAND_TAGLINE,
     phone,
     hasPhone,
     telHref: hasPhone ? `tel:${digits(phone)}` : null,
@@ -89,7 +90,7 @@ async function loadSiteContent() {
     hasAddress,
     mapsHref: hasAddress
       ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-          `${settings?.salonName ?? "Posh Salon"} ${fullAddress}`,
+          `${settings?.salonName ?? BRAND_NAME} ${fullAddress}`,
         )}`
       : null,
     hours,

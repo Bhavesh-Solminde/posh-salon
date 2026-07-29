@@ -1,4 +1,5 @@
 import { DeckleCard } from "@/components/ui/DeckleCard";
+import { BRAND_NAME } from "@/lib/brand";
 
 export function Positioning() {
   return (
@@ -13,9 +14,9 @@ export function Positioning() {
               A salon built around the treatments worth a special trip.
             </h2>
             <p className="mt-6 max-w-measure text-base leading-relaxed text-ink/80">
-              Posh Salon centres on our signature specialities — Hydra Facial, Korean
+              {BRAND_NAME} centres on our signature specialities — Hydra Facial, Korean
               Facial, and bridal &amp; HD makeup — delivered at a standard that treats
-              your visit as an occasion, not a slot on a schedule. Membership at Posh
+              your visit as an occasion, not a slot on a schedule. Membership here
               is not a punch-card discount; it is a standing wallet of value, held for
               you, extended each time you return.
             </p>

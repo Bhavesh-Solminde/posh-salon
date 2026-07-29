@@ -181,7 +181,7 @@ async function main() {
       const wallet = price + bonus;
       const joinedAt = randomDate(new Date(Date.now() - 300 * DAY_MS), new Date(Date.now() - 20 * DAY_MS));
       membershipCount++;
-      const membershipNo = `POSH-${String(membershipCount).padStart(6, "0")}`;
+      const membershipNo = `SS-${String(membershipCount).padStart(6, "0")}`;
 
       const m = await prisma.membership.create({
         data: {
