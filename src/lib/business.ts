@@ -60,6 +60,19 @@ export const BUSINESS = {
   mapsUrl:
     "https://maps.google.com/?q=Posh+Salon,+Ch.+Om+Parkash+Complex,+Old+Najafgarh+Rd,+Bahadurgarh,+Haryana+124507&ftid=0x390d0995deedf79f:0x18fffc379cf55948",
 
+  /**
+   * Source for the map iframe in Visit Us. Google's Maps Embed API needs a
+   * billable key; this `?pb=` form does not. It is the URL that
+   * `maps.google.com/maps?q=…&output=embed` redirects to — we point at the
+   * destination rather than the redirect, because only the 301 hop carries
+   * `x-frame-options: SAMEORIGIN`. The final response sets no framing headers.
+   */
+  mapsEmbedUrl:
+    "https://www.google.com/maps/embed?pb=!1m2!2m1!1sPosh+Salon,+Ch.+Om+Parkash+Complex,+Old+Najafgarh+Rd,+Bahadurgarh,+Haryana+124507",
+
+  /** Where that embed geocodes to — also published as schema.org GeoCoordinates. */
+  geo: { lat: 28.6887256, lng: 76.9326115 },
+
   social: {
     instagram: "https://www.instagram.com/posh_salon.bahadurgarh_",
     youtube: "https://www.youtube.com/@poshsalonbahadurgarh",

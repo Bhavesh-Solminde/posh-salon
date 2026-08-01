@@ -43,6 +43,13 @@ function buildLocalBusinessJsonLd(salon: Awaited<ReturnType<typeof getSiteConten
     };
   }
   if (salon.mapsHref) jsonLd.hasMap = salon.mapsHref;
+  if (salon.geo) {
+    jsonLd.geo = {
+      "@type": "GeoCoordinates",
+      latitude: salon.geo.lat,
+      longitude: salon.geo.lng,
+    };
+  }
   if (salon.hasHours) {
     // Google can only read the opens/closes form. Hours typed into Settings are
     // free text, so those still fall back to a plain description.

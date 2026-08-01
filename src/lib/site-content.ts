@@ -133,6 +133,10 @@ async function loadSiteContent() {
       : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
           `${salonName} ${fullAddress}`,
         )}`,
+    // The pinned embed and its coordinates describe one specific building, so
+    // they drop away the moment staff point the address somewhere else.
+    mapsEmbedUrl: usingOwnAddress ? BUSINESS.mapsEmbedUrl : null,
+    geo: usingOwnAddress ? BUSINESS.geo : null,
     hours,
     hasHours: hours.some((h) => !isPlaceholder(h.time)),
     social: BUSINESS.social,

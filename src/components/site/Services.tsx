@@ -1,4 +1,5 @@
 import { LinkButton } from "@/components/ui/Button";
+import { ServiceList } from "@/components/site/ServiceList";
 import type { SiteContent } from "@/lib/site-content";
 
 export function Services({ services }: { services: SiteContent["services"] }) {
@@ -24,37 +25,7 @@ export function Services({ services }: { services: SiteContent["services"] }) {
           </p>
         ) : (
           <>
-            {/* A printed programme, not a link list: the service pages don't
-                exist yet, so these rows no longer pretend to lead anywhere. */}
-            <ol className="mt-12 divide-y divide-warm-line border-y border-warm-line">
-              {services.map((service) => (
-                <li
-                  key={service.id}
-                  className="flex items-baseline justify-between gap-6 py-6 sm:px-2"
-                >
-                  <span className="flex items-baseline gap-5 sm:gap-8">
-                    <span className="w-6 shrink-0 font-display text-sm italic text-gold-shadow">
-                      {service.no}
-                    </span>
-                    <span>
-                      <span className="block font-display text-xl text-ink sm:text-2xl">
-                        {service.name}
-                      </span>
-                      {service.note && (
-                        <span className="mt-1 block text-sm text-ink-muted">
-                          {service.note}
-                        </span>
-                      )}
-                    </span>
-                  </span>
-                  {service.category && (
-                    <span className="shrink-0 text-meta uppercase text-ink-muted">
-                      {service.category}
-                    </span>
-                  )}
-                </li>
-              ))}
-            </ol>
+            <ServiceList services={services} />
 
             <div className="mt-12">
               <LinkButton href="#reserve" variant="outline">

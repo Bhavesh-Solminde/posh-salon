@@ -97,27 +97,47 @@ export function VisitUs({ salon }: { salon: SiteContent["salon"] }) {
           </dl>
         </DeckleCard>
 
-        <div className="relative flex min-h-[320px] flex-col items-center justify-center border border-dashed border-warm-line bg-warm-panel px-8 text-center">
-          {salon.hasAddress ? (
-            <>
-              <p className="max-w-measure text-base text-ink">{salon.fullAddress}</p>
-              <div className="mt-6">
-                <LinkButton href={salon.mapsHref!} variant="outline" target="_blank" rel="noopener noreferrer">
-                  Get Directions
-                </LinkButton>
+        {salon.hasAddress ? (
+          <div className="flex flex-col">
+            {salon.mapsEmbedUrl ? (
+              // Keyless embed — the Maps Embed API needs a billable key. Lazy so
+              // the map costs nothing until this far down the page is reached.
+              <div className="relative min-h-[320px] flex-1 overflow-hidden border border-warm-line bg-warm-panel">
+                <iframe
+                  src={salon.mapsEmbedUrl}
+                  title={`Map showing ${salon.name}, ${salon.city}`}
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  className="absolute inset-0 h-full w-full border-0"
+                />
               </div>
-            </>
-          ) : (
-            <>
-              <p className="text-sm text-ink-muted">
-                Directions appear here once the salon&rsquo;s address is confirmed.
-              </p>
-              <span className="mt-5 inline-block border border-gold/40 px-6 py-3 text-meta uppercase text-ink-muted opacity-60">
+            ) : (
+              // Staff pointed the address somewhere our pinned map doesn't cover.
+              <div className="flex min-h-[320px] flex-1 items-center justify-center border border-warm-line bg-warm-panel px-8 text-center">
+                <p className="max-w-measure text-base text-ink">{salon.fullAddress}</p>
+              </div>
+            )}
+            <div className="mt-6 flex justify-center">
+              <LinkButton
+                href={salon.mapsHref!}
+                variant="outline"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 Get Directions
-              </span>
-            </>
-          )}
-        </div>
+              </LinkButton>
+            </div>
+          </div>
+        ) : (
+          <div className="relative flex min-h-[320px] flex-col items-center justify-center border border-dashed border-warm-line bg-warm-panel px-8 text-center">
+            <p className="text-sm text-ink-muted">
+              Directions appear here once the salon&rsquo;s address is confirmed.
+            </p>
+            <span className="mt-5 inline-block border border-gold/40 px-6 py-3 text-meta uppercase text-ink-muted opacity-60">
+              Get Directions
+            </span>
+          </div>
+        )}
       </div>
     </section>
   );
