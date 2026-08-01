@@ -56,8 +56,10 @@ Confirmed differentiators (the site's core promise, in priority order):
   manually. The system only *generates* those artifacts.
 - **Region:** GST + UPI indicate India → currency INR, timezone Asia/Kolkata assumed.
   *(Inferred — to confirm.)*
-- **Business identity** (city, address, phone, hours) **not yet provided.** Operating salon,
-  details to follow — use clearly-marked placeholders; do not fabricate.
+- **Business identity** (address, phone/WhatsApp, hours, Google Maps listing, Instagram,
+  YouTube, Facebook) **provided and published** — see `src/lib/business.ts`. Bahadurgarh,
+  Haryana; open 7 days, 9:00 AM – 9:00 PM. No email address supplied yet, so the email
+  row stays hidden.
 
 ## Capabilities and Constraints
 
@@ -100,9 +102,10 @@ attendance-marking style; business location and hours.
 - **Available:** the Posh Salon **logo** at `posh_salon.PNG` (viewed — gold/black/cream
   circular emblem).
 - **Not yet available — must NOT be fabricated:** professional photography, real customer
-  testimonials/reviews, the final service catalog with prices, real business
-  address/phone/hours, and GST details. Until the salon supplies these, use clearly-marked
-  placeholders.
+  testimonials/reviews, the final service catalog with prices, an email address, and GST
+  details. Until the salon supplies these, use clearly-marked placeholders.
+- **Now available:** real business address, phone/WhatsApp, hours, Maps listing and social
+  profiles — committed to `src/lib/business.ts` and published on the landing page.
 
 ## Product Principles
 

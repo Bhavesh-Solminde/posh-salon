@@ -2,6 +2,7 @@ import { randomUUID, webcrypto } from "node:crypto";
 import { PrismaClient } from "@prisma/client";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
+import { BUSINESS } from "../src/lib/business";
 
 // Node 18 doesn't expose Web Crypto as a global; Better Auth needs it.
 if (!globalThis.crypto) {
@@ -39,18 +40,16 @@ async function main() {
       id: "singleton",
       salonName: "Posh Salon",
       tagline: "Premier Hair · Skin · Makeup Atelier",
-      addressLine: "Address to be confirmed",
-      city: "City to be confirmed",
-      phone: "+91 00000 00000",
+      addressLine: BUSINESS.addressLine,
+      city: BUSINESS.city,
+      phone: BUSINESS.phone,
+      whatsapp: BUSINESS.whatsapp,
       gstRatePct: 18,
       pricesIncludeGst: false,
       invoicePrefix: "POSH",
       invoiceNextSeq: 1,
       currency: "INR",
-      hoursJson: [
-        { day: "Monday — Saturday", time: "Hours to be confirmed" },
-        { day: "Sunday", time: "Hours to be confirmed" },
-      ],
+      hoursJson: BUSINESS.hours.map((h) => ({ day: h.day, time: h.time })),
     },
   });
 

@@ -37,18 +37,33 @@ function buildLocalBusinessJsonLd(salon: Awaited<ReturnType<typeof getSiteConten
       "@type": "PostalAddress",
       streetAddress: salon.address,
       addressLocality: salon.city,
+      ...(salon.state ? { addressRegion: salon.state } : {}),
+      ...(salon.postalCode ? { postalCode: salon.postalCode } : {}),
       addressCountry: "IN",
     };
   }
+  if (salon.mapsHref) jsonLd.hasMap = salon.mapsHref;
   if (salon.hasHours) {
+    // Google can only read the opens/closes form. Hours typed into Settings are
+    // free text, so those still fall back to a plain description.
     jsonLd.openingHoursSpecification = salon.hours
       .filter((h) => !isPlaceholder(h.time))
-      .map((h) => ({
-        "@type": "OpeningHoursSpecification",
-        dayOfWeek: h.day,
-        description: h.time,
-      }));
+      .map((h) =>
+        h.opens && h.closes
+          ? {
+              "@type": "OpeningHoursSpecification",
+              dayOfWeek: h.days ?? h.day,
+              opens: h.opens,
+              closes: h.closes,
+            }
+          : {
+              "@type": "OpeningHoursSpecification",
+              dayOfWeek: h.day,
+              description: h.time,
+            },
+      );
   }
+  if (salon.hasSocial) jsonLd.sameAs = Object.values(salon.social);
   return jsonLd;
 }
 

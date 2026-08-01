@@ -15,12 +15,14 @@ Open [http://localhost:3000](http://localhost:3000) to view it.
 
 ## Notes
 
-- Business details (address, phone, hours) and final service pricing are not yet
-  confirmed by the salon — these render as clearly labelled placeholders throughout
-  the site. Update `src/data/contact.ts`, `src/data/services.ts`, and
-  `src/data/membership.ts` once real values are available.
-- The admin dashboard described in the project's product requirements is a separate,
-  not-yet-built surface.
+- Business details (address, phone, hours, Google Maps and social profiles) are
+  confirmed and live in [`src/lib/business.ts`](./src/lib/business.ts). Staff can
+  override the contact fields at `/admin/settings`; whatever they save wins, and
+  anything they leave blank falls back to that file. Edit it to change what the
+  landing page publishes.
+- Final service pricing is still unconfirmed, so services render "terms by
+  consultation" rather than a figure. Marketing copy for membership tiers lives in
+  `src/data/membership.ts`.
 
 ## Deploy
 

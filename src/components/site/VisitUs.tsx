@@ -2,6 +2,12 @@ import { DeckleCard } from "@/components/ui/DeckleCard";
 import { LinkButton } from "@/components/ui/Button";
 import { isPlaceholder, type SiteContent } from "@/lib/site-content";
 
+const SOCIALS = [
+  { key: "instagram", label: "Instagram" },
+  { key: "youtube", label: "YouTube" },
+  { key: "facebook", label: "Facebook" },
+] as const;
+
 export function VisitUs({ salon }: { salon: SiteContent["salon"] }) {
   return (
     <section id="visit" className="px-6 py-24 sm:py-32">
@@ -60,6 +66,30 @@ export function VisitUs({ salon }: { salon: SiteContent["salon"] }) {
                         {isPlaceholder(h.time) ? "To be confirmed" : h.time}
                       </span>
                     </div>
+                  ))}
+                </dd>
+              </div>
+            )}
+            {salon.hasSocial && (
+              <div>
+                <dt className="text-meta uppercase text-ink-muted">Follow</dt>
+                <dd className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-base">
+                  {SOCIALS.map((s, i) => (
+                    <span key={s.label} className="flex items-center gap-3">
+                      {i > 0 && (
+                        <span aria-hidden className="text-ink-muted/60">
+                          ·
+                        </span>
+                      )}
+                      <a
+                        href={salon.social[s.key]}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="underline decoration-gold/50 underline-offset-4 transition-colors duration-300 hover:decoration-gold-shadow"
+                      >
+                        {s.label}
+                      </a>
+                    </span>
                   ))}
                 </dd>
               </div>
