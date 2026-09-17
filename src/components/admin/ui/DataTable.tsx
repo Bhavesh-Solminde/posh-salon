@@ -9,6 +9,9 @@ export type Column<T> = {
   hideOnMobile?: boolean;
 };
 
+/** Edge-cell gutters, shared with callers that render their own `foot` rows. */
+export const tableEdgeClass = "first:pl-4 last:pr-4 sm:first:pl-6 sm:last:pr-6";
+
 /**
  * Sharp, hairline-ruled table. Money columns should use align="right" (cells get
  * tabular-nums automatically). Renders `empty` when there are no rows.
@@ -22,6 +25,7 @@ export function DataTable<T>({
   getRowKey,
   empty,
   caption,
+  foot,
 }: {
   columns: Column<T>[];
   rows: T[];
@@ -29,10 +33,12 @@ export function DataTable<T>({
   empty?: ReactNode;
   /** Screen-reader name for the table. */
   caption?: string;
+  /** Optional `<tfoot>` rows (e.g. a totals line); cells should reuse `tableEdgeClass`. */
+  foot?: ReactNode;
 }) {
   if (rows.length === 0 && empty !== undefined) return <>{empty}</>;
 
-  const edge = "first:pl-4 last:pr-4 sm:first:pl-6 sm:last:pr-6";
+  const edge = tableEdgeClass;
 
   return (
     <div className="overflow-x-auto">
@@ -72,6 +78,7 @@ export function DataTable<T>({
             </tr>
           ))}
         </tbody>
+        {foot && <tfoot>{foot}</tfoot>}
       </table>
     </div>
   );

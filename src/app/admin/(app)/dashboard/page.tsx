@@ -84,7 +84,7 @@ export default async function DashboardPage() {
 
   const kpis: { label: string; value: string; icon: LucideIcon; href: string }[] = [
     { label: "Today's Revenue", value: formatINR(Number(revenueAgg._sum.amount ?? 0)), icon: IndianRupee, href: "/admin/billing-history" },
-    { label: "Today's Invoices", value: String(invoiceCount), icon: Receipt, href: "/admin/billing-history" },
+    { label: "Today's Invoices", value: String(invoiceCount), icon: Receipt, href: "/admin/billing-history/bills" },
     { label: "Today's Appointments", value: String(apptCount), icon: CalendarDays, href: "/admin/appointments" },
     { label: "New Memberships", value: String(newMemberships), icon: Wallet, href: "/admin/memberships" },
   ];
@@ -168,7 +168,7 @@ export default async function DashboardPage() {
           <Panel className="lg:col-span-2">
             <PanelHeader
               title="Recent Invoices"
-              actions={<ViewAll href="/admin/billing-history" label="invoices" />}
+              actions={<ViewAll href="/admin/billing-history/bills" label="invoices" />}
             />
             <DataTable
               caption="Most recent invoices"

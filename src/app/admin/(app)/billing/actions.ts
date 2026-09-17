@@ -185,7 +185,7 @@ export const createInvoice = withErrorLogging("createInvoice", async (input: unk
     return created;
   }, TX_OPTS);
 
-  revalidatePath("/admin/billing-history");
+  revalidatePath("/admin/billing-history", "layout");
   revalidatePath("/admin/dashboard");
   if (customerId) revalidatePath(`/admin/customers/${customerId}`);
 
