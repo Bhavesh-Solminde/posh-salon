@@ -18,6 +18,7 @@ import {
   filterControlClass,
 } from "@/components/admin/ui/FilterBar";
 import { ExpenseModal } from "./_components/ExpenseModal";
+import { SectionTabs } from "./_components/SectionTabs";
 import { buildWhere, loadLedger, type LedgerFilters } from "./_lib";
 import { formatINR } from "@/lib/money";
 import { formatDate } from "@/lib/format";
@@ -68,6 +69,7 @@ export default async function BillingHistoryPage({
           </>
         }
       />
+      <SectionTabs active="ledger" />
       <div className="space-y-6 p-4 sm:p-6">
         {/* The summary cards and table both depend on the same slow, filtered
             Neon queries — the header/filter shell above renders immediately
